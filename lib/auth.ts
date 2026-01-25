@@ -34,7 +34,7 @@ export const auth = betterAuth({
           const name = user?.name || "Member";
 
           await resend.emails.send({
-            from: 'Scholars Transit Hub <onboarding@resend.dev>',
+            from: 'Scholars Transit Hub <no-reply@divupstudio.online>',
             to: [email],
             subject: type === "forget-password" ? "Reset your password" : "Verify your email address",
             text: `Your verification code is ${otp}. It will expire in 10 minutes.`,

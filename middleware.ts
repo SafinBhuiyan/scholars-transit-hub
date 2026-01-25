@@ -59,6 +59,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  // If authenticated and on root page, redirect to dashboard
+  if (normalizedPathname === "/" || normalizedPathname === "") {
+    const role = session.user.role;
+    if (role === "ADMIN") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    } else if (role === "SUPERVISOR") {
+      return NextResponse.redirect(new URL("/supervisor/dashboard", request.url));
+    } else {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+
   const role = session.user.role;
 
   // Role-based access control

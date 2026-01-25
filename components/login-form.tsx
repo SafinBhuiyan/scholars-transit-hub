@@ -15,6 +15,7 @@ import { authClient } from "@/lib/auth-client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { Logo } from "@/components/logo"
 
 export function LoginForm({
   className,
@@ -69,7 +70,7 @@ export function LoginForm({
           <form className="p-6 md:p-8" onSubmit={handleEmailLogin}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-4 text-center">
-                <img src="https://res.cloudinary.com/dweqw3mgx/image/upload/v1769302905/Scholars_Transit_Hub_Logo-Dark_pugyyq.svg" alt="https://placehold.net/default.svg" />
+                <Logo className="h-10 w-auto" />
                 <p className="text-muted-foreground text-balance">
                   Login to your account
                 </p>
@@ -89,7 +90,7 @@ export function LoginForm({
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password *</FieldLabel>
                   <a
-                    href="#"
+                    href="/forgot-password"
                     className="ml-auto text-sm underline-offset-2 hover:underline"
                   >
                     Forgot your password?

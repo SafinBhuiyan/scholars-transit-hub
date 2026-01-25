@@ -19,6 +19,7 @@ import { useEffect, useState } from "react"
 import { authClient } from "@/lib/auth-client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
+import { Logo } from "@/components/logo"
 
 export function OTPForm({ className, ...props }: React.ComponentProps<"div">) {
   const [otp, setOtp] = useState("")
@@ -134,11 +135,7 @@ export function OTPForm({ className, ...props }: React.ComponentProps<"div">) {
             <form className="w-full max-w-[280px]" onSubmit={handleVerify}>
               <FieldGroup className="items-center text-center">
                 <Field className="mb-2">
-                  <img 
-                    src="https://res.cloudinary.com/dweqw3mgx/image/upload/v1769302905/Scholars_Transit_Hub_Logo-Dark_pugyyq.svg" 
-                    alt="Logo" 
-                    className="mx-auto mb-4 h-8"
-                  />
+                  <Logo className="mx-auto mb-4 h-8" />
                   <h1 className="text-2xl font-bold tracking-tight text-center">Enter verification code</h1>
                   <p className="text-muted-foreground text-sm text-center">
                     We sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>

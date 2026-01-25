@@ -17,12 +17,14 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconPlus,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
+import { Logo } from "@/components/logo"
 import {
   Sidebar,
   SidebarContent,
@@ -59,22 +61,29 @@ const data = {
       title: "Projects",
       url: "#",
       icon: IconFolder,
+      isActive: true,
+      items: [
+        {
+          title: "Genesis",
+          url: "#",
+        },
+        {
+          title: "Explorer",
+          url: "#",
+        },
+        {
+          title: "Quantum",
+          url: "#",
+        },
+      ],
     },
     {
       title: "Team",
       url: "#",
       icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
       items: [
         {
-          title: "Active Proposals",
+          title: "Maintenance",
           url: "#",
         },
         {
@@ -86,21 +95,6 @@ const data = {
     {
       title: "Proposal",
       icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
       url: "#",
       items: [
         {
@@ -147,6 +141,11 @@ const data = {
       url: "#",
       icon: IconFileWord,
     },
+    {
+      name: "More",
+      url: "#",
+      icon: IconPlus, // Wait, IconPlus isn't imported. I'll use IconListDetails or similar
+    },
   ],
 }
 
@@ -158,11 +157,11 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="h-12 hover:bg-transparent active:bg-transparent px-2"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+              <a href="/dashboard" className="flex items-center gap-2">
+                <Logo className="h-8 w-auto" />
+                <span className="text-sm font-bold leading-tight tracking-tight uppercase">Scholars Transit</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

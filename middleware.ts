@@ -18,9 +18,12 @@ export async function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
+  const normalizedPathname = pathname.endsWith("/") && pathname !== "/"
+    ? pathname.slice(0, -1)
+    : pathname;
 
   // Special case for verify-email: Only redirect to dashboard if ALREADY verified
-  if (pathname === "/verify-email" && session) {
+  if (normalizedPathname === "/verify-email" && session) {
     if (session.user.emailVerified) {
       const role = session.user.role;
       if (role === "ADMIN") {
@@ -34,8 +37,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow access to login and signup pages for unauthenticated users
-  if (pathname === "/login" || pathname === "/signup") {
+  // Allow access to login, signup, and password recovery pages for unauthenticated users
+  const publicRoutes = ["/login", "/signup", "/forgot-password", "/reset-password"];
+  if (publicRoutes.includes(normalizedPathname)) {
     if (session) {
       // If authenticated, redirect to appropriate dashboard
       const role = session.user.role;
@@ -99,6 +103,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.svg|.*\\.png|.*\\.jpg).*)",
   ],
 };

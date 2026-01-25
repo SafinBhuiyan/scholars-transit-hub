@@ -15,6 +15,7 @@ import { authClient } from "@/lib/auth-client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { Logo } from "@/components/logo"
 
 export function SignupForm({
   className,
@@ -67,7 +68,7 @@ export function SignupForm({
           <form className="p-6 md:p-8" onSubmit={handleEmailSignup}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-4 text-center">
-                <img src="https://res.cloudinary.com/dweqw3mgx/image/upload/v1769302905/Scholars_Transit_Hub_Logo-Dark_pugyyq.svg" alt="https://placehold.net/default.svg" />
+                <Logo className="h-10 w-auto" />
                 <p className="text-muted-foreground text-sm text-balance">
                   Enter your details below to create your account
                 </p>

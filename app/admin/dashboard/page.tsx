@@ -1,8 +1,15 @@
+import { ChartAreaInteractive } from "@/components/chart-area-interactive"
+import { DataTable } from "@/components/data-table"
+import { SectionCards } from "@/components/section-cards"
+
+import data from "../../dashboard/data.json"
+
 export default function AdminDashboardPage() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      <p>Welcome, Admin! You have access to administrative features.</p>
+    <div className="flex flex-1 flex-col gap-6">
+      <SectionCards />
+      <ChartAreaInteractive />
+      <DataTable data={data} />
     </div>
   )
 }

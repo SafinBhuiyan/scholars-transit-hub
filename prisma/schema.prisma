@@ -126,3 +126,31 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+model Route {
+  id           String        @id @default(uuid())
+  name         String
+  capacity     Int
+  startTime    String
+  returnTime   String
+  isActive     Boolean       @default(true)
+  pickupPoints PickupPoint[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("route")
+}
+
+model PickupPoint {
+  id        String   @id @default(uuid())
+  name      String
+  landmark  String?
+  order     Int
+  routeId   String
+  route     Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([routeId])
+  @@map("pickup_point")
+}

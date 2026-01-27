@@ -18,6 +18,10 @@ import {
   IconSettings,
   IconUsers,
   IconPlus,
+  IconRoute,
+  IconCreditCard,
+  IconTicket,
+  IconSpeakerphone,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -44,18 +48,38 @@ const roleBasedNavigation = {
         icon: IconDashboard,
       },
       {
+        title: "Applications",
+        url: "/admin/dashboard/applications",
+        icon: IconFileDescription,
+      },
+      {
         title: "Users",
         url: "/admin/dashboard/users",
         icon: IconUsers,
       },
       {
-        title: "Analytics",
-        url: "#",
-        icon: IconChartBar,
+        title: "Routes & Pickup Points",
+        url: "/admin/dashboard/routes",
+        icon: IconRoute,
+      },
+      {
+        title: "Payments",
+        url: "/admin/dashboard/payments",
+        icon: IconCreditCard,
+      },
+      {
+        title: "Active Passes",
+        url: "/admin/dashboard/passes",
+        icon: IconTicket,
+      },
+      {
+        title: "Notices",
+        url: "/admin/dashboard/notices",
+        icon: IconSpeakerphone,
       },
       {
         title: "Reports",
-        url: "#",
+        url: "/admin/dashboard/reports",
         icon: IconReport,
       },
     ],
@@ -64,11 +88,6 @@ const roleBasedNavigation = {
         name: "Data Library",
         url: "#",
         icon: IconDatabase,
-      },
-      {
-        name: "Reports",
-        url: "#",
-        icon: IconReport,
       },
     ],
   },

@@ -43,7 +43,7 @@ export function NoticeViewDialog({ open, onOpenChange, notice }: NoticeViewDialo
 
   const getStatusBadge = () => {
     const published = notice.isPublished
-    const expired = notice.expiryDate && new Date(notice.expiryDate) < new Date()
+    const expired = notice.expiryDate && new Date(notice.expiryDate).setHours(23, 59, 59, 999) < new Date().getTime()
     
     if (expired) return <Badge variant="destructive">Expired</Badge>
     return (

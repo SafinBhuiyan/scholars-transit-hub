@@ -299,12 +299,12 @@ export function NoticeDialog({ open, onOpenChange, onSuccess, notice }: NoticeDi
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="gap-2">
+        <DialogFooter className="flex-col sm:flex-row gap-3 pt-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="gap-2 w-full sm:w-auto">
             Cancel
             <Kbd>Esc</Kbd>
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting} className="gap-2">
+          <Button onClick={handleSubmit} disabled={isSubmitting} className="gap-2 w-full sm:w-auto">
             {isSubmitting && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
             {notice ? "Save Changes" : "Create Notice"}
             <Kbd>↵</Kbd>

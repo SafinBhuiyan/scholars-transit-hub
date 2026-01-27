@@ -35,6 +35,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { SplashScreen } from "@/components/splash-screen";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -51,6 +53,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <SplashScreen />
           {children}
           <Toaster richColors expand={false} />
         </ThemeProvider>

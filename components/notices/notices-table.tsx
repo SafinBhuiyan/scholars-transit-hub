@@ -53,9 +53,9 @@ export function NoticesTable({ data }: { data: any[] }) {
     const now = new Date()
     return {
       all: data.length,
-      published: data.filter(n => n.isPublished && (!n.expiryDate || new Date(n.expiryDate) > now)).length,
+      published: data.filter(n => n.isPublished && (!n.expiryDate || new Date(n.expiryDate).setHours(23, 59, 59, 999) >= now.getTime())).length,
       draft: data.filter(n => !n.isPublished).length,
-      expired: data.filter(n => n.expiryDate && new Date(n.expiryDate) < now).length,
+      expired: data.filter(n => n.expiryDate && new Date(n.expiryDate).setHours(23, 59, 59, 999) < now.getTime()).length,
       pinned: data.filter(n => n.isPinned).length,
     }
   }, [data])
@@ -65,9 +65,9 @@ export function NoticesTable({ data }: { data: any[] }) {
     const now = new Date()
     
     // Status Filter
-    if (activeTab === "published") result = result.filter(n => n.isPublished && (!n.expiryDate || new Date(n.expiryDate) > now))
+    if (activeTab === "published") result = result.filter(n => n.isPublished && (!n.expiryDate || new Date(n.expiryDate).setHours(23, 59, 59, 999) >= now.getTime()))
     if (activeTab === "draft") result = result.filter(n => !n.isPublished)
-    if (activeTab === "expired") result = result.filter(n => n.expiryDate && new Date(n.expiryDate) < now)
+    if (activeTab === "expired") result = result.filter(n => n.expiryDate && new Date(n.expiryDate).setHours(23, 59, 59, 999) < now.getTime())
     if (activeTab === "pinned") result = result.filter(n => n.isPinned)
     
     return result
@@ -149,7 +149,7 @@ export function NoticesTable({ data }: { data: any[] }) {
       {paginatedData.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {paginatedData.map((notice) => {
-                const expired = notice.expiryDate && new Date(notice.expiryDate) < new Date()
+                const expired = notice.expiryDate && new Date(notice.expiryDate).setHours(23, 59, 59, 999) < new Date().getTime()
                 return (
                     <div 
                         key={notice.id} 
@@ -161,7 +161,7 @@ export function NoticesTable({ data }: { data: any[] }) {
                                 <div className="p-2 bg-muted/50 rounded-lg group-hover:bg-primary/10 transition-colors">
                                     {getTypeIcon(notice.type)}
                                 </div>
-                                <div className="flex flex-col items-end gap-1.5">
+                                <div className="flex items-center gap-2">
                                     {notice.isPinned && (
                                         <Badge variant="outline" className="h-6 w-6 p-0 flex items-center justify-center rounded-full border-primary/30 text-primary bg-primary/5">
                                             <IconPinned className="h-3.5 w-3.5 fill-primary" />
@@ -177,11 +177,11 @@ export function NoticesTable({ data }: { data: any[] }) {
                                 </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <h3 className="font-bold text-sm line-clamp-1 leading-tight group-hover:text-primary transition-colors">
+                            <div className="space-y-1.5">
+                                <h3 className="font-bold text-[13px] sm:text-sm line-clamp-2 leading-snug group-hover:text-primary transition-colors">
                                     {notice.title}
                                 </h3>
-                                <p className="text-[11px] text-muted-foreground/80 line-clamp-2 leading-relaxed h-7">
+                                <p className="text-[11px] text-muted-foreground/80 line-clamp-2 leading-relaxed min-h-[2.2rem]">
                                     {notice.content}
                                 </p>
                             </div>
@@ -199,9 +199,9 @@ export function NoticesTable({ data }: { data: any[] }) {
                         {/* Actions Footer */}
                         <div className="p-3 bg-muted/5 border-t border-border/30 flex items-center justify-between gap-2 opacity-100 group-hover:bg-muted/20 transition-colors">
                             <Button 
-                                variant="ghost" 
+                                variant="outline" 
                                 size="sm" 
-                                className="h-7 text-[11px] gap-1 px-2 hover:bg-primary/10 hover:text-primary"
+                                className="h-7 text-[11px] gap-1 px-2 border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm bg-background/50"
                                 onClick={() => {
                                     setSelectedNotice(notice)
                                     setIsViewOpen(true)
@@ -209,11 +209,11 @@ export function NoticesTable({ data }: { data: any[] }) {
                             >
                                 <IconEye className="h-3 w-3" /> View
                             </Button>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5">
                                 <Button 
-                                    variant="ghost" 
+                                    variant="outline" 
                                     size="icon" 
-                                    className="h-7 w-7 rounded-md hover:bg-primary/10 hover:text-primary"
+                                    className="h-7 w-7 rounded-md border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm bg-background/50"
                                     onClick={() => {
                                         setSelectedNotice(notice)
                                         setIsDialogOpen(true)
@@ -222,9 +222,9 @@ export function NoticesTable({ data }: { data: any[] }) {
                                     <IconEdit className="h-3 w-3" />
                                 </Button>
                                 <Button 
-                                    variant="ghost" 
+                                    variant="outline" 
                                     size="icon" 
-                                    className="h-7 w-7 rounded-md text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                    className="h-7 w-7 rounded-md border-border/40 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all shadow-sm bg-background/50"
                                     onClick={() => {
                                         setSelectedNotice(notice)
                                         setIsDeleteDialogOpen(true)

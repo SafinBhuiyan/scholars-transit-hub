@@ -21,10 +21,19 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
+import { authClient } from "@/lib/auth-client"
 
 export function NotificationBell() {
+  const { data: session } = authClient.useSession()
   const [notices, setNotices] = React.useState<any[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
+
+  const noticesPath = React.useMemo(() => {
+    if (session?.user?.role === "ADMIN") return "/admin/dashboard/notices"
+    if (session?.user?.role === "SUPERVISOR") return "/supervisor/dashboard/notices"
+    return "/dashboard/notices"
+  }, [session?.user?.role])
 
   const unreadCount = notices.filter(n => !n.isRead).length
 
@@ -73,7 +82,7 @@ export function NotificationBell() {
   return (
     <DropdownMenu onOpenChange={(open) => { if (open) fetchNotices() }}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-9 w-9">
+        <Button variant="outline" size="icon" className="relative h-8 w-8">
           <IconBell className="h-5 w-5" />
           {unreadCount > 0 && (
             <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground animate-in zoom-in">
@@ -125,17 +134,19 @@ export function NotificationBell() {
                   {notice.content}
                 </p>
                 <span className="text-[10px] text-muted-foreground mt-1">
-                    {new Date(notice.createdAt).toLocaleString()}
+                    {new Date(notice.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(notice.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                 </span>
               </div>
             ))
           )}
         </div>
         <DropdownMenuSeparator className="m-0" />
-        <div className="p-2 text-center">
-            <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground hover:text-foreground">
-                View all notifications
-            </Button>
+        <div className="p-3 bg-muted/20 border-t">
+            <Link href={noticesPath} className="block w-full">
+                <Button variant="outline" size="sm" className="w-full text-xs font-semibold shadow-sm hover:bg-background">
+                    View all notices
+                </Button>
+            </Link>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

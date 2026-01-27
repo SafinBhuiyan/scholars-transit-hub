@@ -66,6 +66,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { Kbd, KbdGroup } from "@/components/ui/kbd"
 
 export const userSchema = z.object({
   id: z.string(),
@@ -73,6 +74,7 @@ export const userSchema = z.object({
   email: z.string().email(),
   image: z.string().nullable().optional(),
   role: z.enum(["ADMIN", "SUPERVISOR", "USER"]),
+  joinDate: z.string(),
 })
 
 export type User = z.infer<typeof userSchema>
@@ -92,6 +94,7 @@ export function UsersTable({ data }: { data: User[] }) {
   const [targetUser, setTargetUser] = React.useState<User | null>(null)
   const [targetRole, setTargetRole] = React.useState<User["role"] | null>(null)
   const [isUpdating, setIsUpdating] = React.useState(false)
+  const searchRef = React.useRef<HTMLInputElement>(null)
 
   const router = useRouter()
 
@@ -148,66 +151,77 @@ export function UsersTable({ data }: { data: User[] }) {
     },
     {
       accessorKey: "email",
-      header: "Email",
+      header: () => <div className="text-center">Email</div>,
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.email}</span>
+        <div className="text-center text-muted-foreground">{row.original.email}</div>
       ),
     },
     {
       accessorKey: "role",
-      header: "Role",
+      header: () => <div className="text-center">Role</div>,
       cell: ({ row }) => {
         const role = row.original.role
         return (
-          <Badge
-            variant="outline"
-            className={`
-              ${role === "ADMIN" ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/25" : ""}
-              ${role === "SUPERVISOR" ? "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/25" : ""}
-              ${role === "USER" ? "bg-gray-500/15 text-gray-700 dark:text-gray-400 border-gray-500/25" : ""}
-            `}
-          >
-            {role}
-          </Badge>
+          <div className="flex justify-center">
+            <Badge
+              variant="outline"
+              className={`
+                ${role === "ADMIN" ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/25" : ""}
+                ${role === "SUPERVISOR" ? "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/25" : ""}
+                ${role === "USER" ? "bg-gray-500/15 text-gray-700 dark:text-gray-400 border-gray-500/25" : ""}
+              `}
+            >
+              {role}
+            </Badge>
+          </div>
         )
       },
     },
     {
+      accessorKey: "joinDate",
+      header: () => <div className="text-center">Joined</div>,
+      cell: ({ row }) => (
+        <div className="text-center text-muted-foreground">{row.original.joinDate}</div>
+      ),
+    },
+    {
       id: "actions",
-      header: "Actions",
+      header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => {
         const user = row.original
         return (
-          <Popover>
-            <PopoverTrigger asChild>
-               <Button variant="outline" size="sm" className="w-[140px] justify-between">
-                 {user.role}
-                 <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[140px] p-0" align="end">
-              <Command>
-                <CommandList>
-                  <CommandGroup>
-                    {["USER", "ADMIN", "SUPERVISOR"].map((role) => (
-                      <CommandItem
-                        key={role}
-                        value={role}
-                        onSelect={() => handleRoleChangeInitiate(user, role as User["role"])}
-                      >
-                        <IconCheck
-                          className={`mr-2 h-4 w-4 ${
-                            user.role === role ? "opacity-100" : "opacity-0"
-                          }`}
-                        />
-                        {role}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <div className="flex justify-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="w-[140px] justify-between">
+                  {user.role}
+                  <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[140px] p-0" align="end">
+                <Command>
+                  <CommandList>
+                    <CommandGroup>
+                      {["USER", "ADMIN", "SUPERVISOR"].map((role) => (
+                        <CommandItem
+                          key={role}
+                          value={role}
+                          onSelect={() => handleRoleChangeInitiate(user, role as User["role"])}
+                        >
+                          <IconCheck
+                            className={`mr-2 h-4 w-4 ${
+                              user.role === role ? "opacity-100" : "opacity-0"
+                            }`}
+                          />
+                          {role}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
         )
       },
     },
@@ -230,6 +244,32 @@ export function UsersTable({ data }: { data: User[] }) {
     },
   })
 
+  React.useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        searchRef.current?.focus()
+      }
+
+      if (e.key === "[" && (e.metaKey || e.ctrlKey)) {
+        if (table.getCanPreviousPage()) {
+          e.preventDefault()
+          table.previousPage()
+        }
+      }
+
+      if (e.key === "]" && (e.metaKey || e.ctrlKey)) {
+        if (table.getCanNextPage()) {
+          e.preventDefault()
+          table.nextPage()
+        }
+      }
+    }
+
+    document.addEventListener("keydown", down)
+    return () => document.removeEventListener("keydown", down)
+  }, [table])
+
   return (
     <div className="flex flex-col gap-6">
       {/* Page Header */}
@@ -242,15 +282,22 @@ export function UsersTable({ data }: { data: User[] }) {
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="flex flex-1 items-center gap-2 w-full sm:w-auto">
           <div className="relative w-full max-w-sm">
-            <IconSearch className="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
+            <IconSearch className="text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4" />
             <Input
+              ref={searchRef}
               placeholder="Search by name..."
               value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
               onChange={(event) =>
                 table.getColumn("name")?.setFilterValue(event.target.value)
               }
-              className="pl-9"
+              className="pl-9 pr-12"
             />
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:block">
+              <KbdGroup>
+                <Kbd>⌘</Kbd>
+                <Kbd>K</Kbd>
+              </KbdGroup>
+            </div>
           </div>
           <Select
             value={(table.getColumn("role")?.getFilterValue() as string) ?? "ALL"}
@@ -328,7 +375,12 @@ export function UsersTable({ data }: { data: User[] }) {
           size="sm"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
+          className="gap-2"
         >
+          <KbdGroup className="hidden sm:flex">
+            <Kbd>⌘</Kbd>
+            <Kbd>[</Kbd>
+          </KbdGroup>
           Previous
         </Button>
         <Button
@@ -336,8 +388,13 @@ export function UsersTable({ data }: { data: User[] }) {
           size="sm"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
+          className="gap-2"
         >
           Next
+          <KbdGroup className="hidden sm:flex">
+            <Kbd>⌘</Kbd>
+            <Kbd>]</Kbd>
+          </KbdGroup>
         </Button>
       </div>
 
@@ -373,12 +430,14 @@ export function UsersTable({ data }: { data: User[] }) {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={isUpdating}>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={isUpdating} className="gap-2">
               Cancel
+              <Kbd>Esc</Kbd>
             </Button>
-            <Button onClick={handleConfirmRoleChange} disabled={isUpdating}>
+            <Button onClick={handleConfirmRoleChange} disabled={isUpdating} className="gap-2">
               {isUpdating && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
               Confirm Change
+              <Kbd>↵</Kbd>
             </Button>
           </DialogFooter>
         </DialogContent>

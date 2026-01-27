@@ -14,6 +14,7 @@ export default async function UsersPage() {
     email: user.email,
     image: user.image,
     role: user.role,
+    joinDate: `${user.createdAt.getDate()} ${user.createdAt.toLocaleString("en-US", { month: "short" })}, ${user.createdAt.getFullYear()}`,
   }))
 
   return (

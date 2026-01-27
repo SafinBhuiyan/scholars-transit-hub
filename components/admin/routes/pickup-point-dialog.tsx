@@ -18,10 +18,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Kbd } from "@/components/ui/kbd"
 
 const pickupSchema = z.object({
     name: z.string().min(1, "Name is required"),
     landmark: z.string().optional(),
+    isActive: z.boolean(),
 })
 
 type PickupFormValues = z.infer<typeof pickupSchema>
@@ -48,6 +51,7 @@ export function PickupPointDialog({
         defaultValues: {
             name: "",
             landmark: "",
+            isActive: true,
         },
     })
 
@@ -56,11 +60,13 @@ export function PickupPointDialog({
             form.reset({
                 name: pickup.name,
                 landmark: pickup.landmark || "",
+                isActive: pickup.isActive ?? true,
             })
         } else {
             form.reset({
                 name: "",
                 landmark: "",
+                isActive: true,
             })
         }
     }, [pickup, form, open])
@@ -94,55 +100,76 @@ export function PickupPointDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[400px] rounded-[2rem] border-none shadow-2xl">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-3 text-2xl font-black">
-                            <div className="p-2 bg-primary/10 rounded-xl">
-                                <IconMapPin className="h-6 w-6 text-primary" />
-                            </div>
-                            {pickup ? "Edit Stop" : "Add Stop"}
-                        </DialogTitle>
-                        <DialogDescription className="text-slate-500 font-medium">
-                            {pickup ? "Update the name or landmark for this stop." : "Add a new stop to this route."}
+                        <DialogTitle>{pickup ? "Edit Stop" : "Add New Stop"}</DialogTitle>
+                        <DialogDescription>
+                            Enter the name and landmark for this pickup point.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-5 py-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="pickup-name" className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Pickup Name</Label>
-                            <Input
-                                id="pickup-name"
-                                placeholder="e.g. Matuail"
-                                className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 bg-slate-50/50"
-                                {...form.register("name")}
-                            />
-                            {form.formState.errors.name && (
-                                <p className="text-xs text-destructive font-medium ml-1">{form.formState.errors.name.message}</p>
-                            )}
+
+                    <div className="space-y-6 py-4">
+                        {/* Main Info */}
+                        <div className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="pickup-name">Pickup Name</Label>
+                                <Input
+                                    id="pickup-name"
+                                    placeholder="e.g. Matuail"
+                                    {...form.register("name")}
+                                />
+                                {form.formState.errors.name && (
+                                    <p className="text-xs text-destructive font-medium">{form.formState.errors.name.message}</p>
+                                )}
+                            </div>
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="landmark" className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Landmark (Optional)</Label>
-                            <Input
-                                id="landmark"
-                                placeholder="e.g. Near Overbridge"
-                                className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 bg-slate-50/50"
-                                {...form.register("landmark")}
+
+                        {/* Additional Info Box */}
+                        <div className="grid gap-4 p-4 border rounded-md bg-muted/50">
+                            <div className="grid gap-2">
+                                <Label htmlFor="landmark">Landmark (Optional)</Label>
+                                <Input
+                                    id="landmark"
+                                    placeholder="e.g. Near Overbridge"
+                                    {...form.register("landmark")}
+                                />
+                                <p className="text-[10px] text-muted-foreground px-1">
+                                    A specific point to help students identify the stop.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Status Switch */}
+                        <div className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
+                            <div className="space-y-0.5">
+                                <Label htmlFor="isActive" className="text-sm cursor-pointer">Active Status</Label>
+                                <p className="text-[10px] text-muted-foreground">
+                                    Visible to students and open for tracking.
+                                </p>
+                            </div>
+                            <Switch
+                                id="isActive"
+                                checked={form.watch("isActive")}
+                                onCheckedChange={(checked) => form.setValue("isActive", checked)}
                             />
                         </div>
                     </div>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button
+
+                    <DialogFooter className="flex-col sm:flex-row gap-3 pt-2">
+                        <Button 
                             type="button"
-                            variant="ghost"
-                            onClick={() => onOpenChange(false)}
-                            disabled={isSubmitting}
-                            className="rounded-xl h-12 font-bold text-slate-500"
+                            variant="outline" 
+                            onClick={() => onOpenChange(false)} 
+                            className="gap-2 w-full sm:w-auto"
                         >
                             Cancel
+                            <Kbd>Esc</Kbd>
                         </Button>
-                        <Button type="submit" disabled={isSubmitting} className="rounded-xl h-12 px-8 font-bold shadow-lg shadow-primary/20 transition-all active:scale-95">
+                        <Button type="submit" disabled={isSubmitting} className="gap-2 w-full sm:w-auto">
                             {isSubmitting && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
-                            {pickup ? "Save Changes" : "Add Point"}
+                            {pickup ? "Save Changes" : "Add Stop"}
+                            <Kbd>↵</Kbd>
                         </Button>
                     </DialogFooter>
                 </form>

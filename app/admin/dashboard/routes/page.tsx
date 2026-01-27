@@ -121,7 +121,7 @@ export default function RoutesPage() {
                     <p className="text-sm text-muted-foreground animate-pulse">Loading routes...</p>
                 </div>
             ) : filteredRoutes.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                     {filteredRoutes.map((route) => (
                         <RouteCard
                             key={route.id}
@@ -179,24 +179,22 @@ export default function RoutesPage() {
             />
 
             <AlertDialog open={!!deleteConfig} onOpenChange={(open) => !open && setDeleteConfig(null)}>
-                <AlertDialogContent className="border-none shadow-2xl rounded-[2rem] p-8">
+                <AlertDialogContent className="border-none shadow-2xl">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="text-2xl font-black">Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-slate-500 font-medium">
-                            {deleteConfig?.type === 'route' 
-                                ? "Deleting this route will remove all associated pickup points. This action cannot be undone."
-                                : "This pickup point will be removed from the route. This action cannot be undone."}
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the {deleteConfig?.type === 'route' ? 'route' : 'pickup point'} <span className="font-bold text-foreground">"{deleteConfig?.data?.name}"</span>. This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter className="mt-4 gap-2">
-                        <AlertDialogCancel disabled={isDeleting} className="border-none hover:bg-slate-100 font-bold rounded-xl h-12">Cancel</AlertDialogCancel>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting} className="border-none hover:bg-muted font-medium">Cancel</AlertDialogCancel>
                         <AlertDialogAction 
                             onClick={(e) => {
                                 e.preventDefault()
                                 handleDelete()
                             }}
                             disabled={isDeleting}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-lg shadow-destructive/20 border-none rounded-xl h-12 px-8 font-bold"
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-lg shadow-destructive/20 border-none"
                         >
                             {isDeleting && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
                             Delete Permanently

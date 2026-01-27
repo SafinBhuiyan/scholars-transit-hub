@@ -7,6 +7,7 @@ import prisma from "@/lib/prisma"
 const pickupUpdateSchema = z.object({
     name: z.string().min(1, "Name is required").optional(),
     landmark: z.string().optional(),
+    isActive: z.boolean().optional(),
 })
 
 export async function PATCH(

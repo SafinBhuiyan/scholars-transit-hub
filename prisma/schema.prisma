@@ -148,6 +148,7 @@ model PickupPoint {
   order     Int
   routeId   String
   route     Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

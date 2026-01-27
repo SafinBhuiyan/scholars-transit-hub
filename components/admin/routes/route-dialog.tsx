@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Kbd } from "@/components/ui/kbd"
 
 const routeSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -105,75 +106,78 @@ export function RouteDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] rounded-[2rem] border-none shadow-2xl">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-3 text-2xl font-black">
-                            <div className="p-2 bg-primary/10 rounded-xl">
-                                <IconRoute className="h-6 w-6 text-primary" />
-                            </div>
-                            {route ? "Edit Route" : "Add Route"}
-                        </DialogTitle>
-                        <DialogDescription className="text-slate-500 font-medium">
-                            {route ? "Update route details and schedule." : "Create a new transport route."}
+                        <DialogTitle>{route ? "Edit Route" : "Create New Route"}</DialogTitle>
+                        <DialogDescription>
+                            Configure the details and schedule for this transportation route.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-5 py-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Route Name</Label>
-                            <Input
-                                id="name"
-                                placeholder="e.g. Signboard Route"
-                                className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 bg-slate-50/50"
-                                {...form.register("name")}
-                            />
-                            {form.formState.errors.name && (
-                                <p className="text-xs text-destructive font-medium ml-1">{form.formState.errors.name.message}</p>
-                            )}
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="capacity" className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Capacity</Label>
-                            <Input
-                                id="capacity"
-                                type="number"
-                                className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 bg-slate-50/50"
-                                {...form.register("capacity", { valueAsNumber: true })}
-                            />
-                            {form.formState.errors.capacity && (
-                                <p className="text-xs text-destructive font-medium ml-1">{form.formState.errors.capacity.message}</p>
-                            )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
+
+                    <div className="space-y-6 py-4">
+                        {/* Main Info */}
+                        <div className="space-y-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="startTime" className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Start Time</Label>
+                                <Label htmlFor="name">Route Name</Label>
                                 <Input
-                                    id="startTime"
-                                    type="time"
-                                    className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 bg-slate-50/50"
-                                    {...form.register("startTime")}
+                                    id="name"
+                                    placeholder="e.g. Signboard Route"
+                                    {...form.register("name")}
                                 />
-                                {form.formState.errors.startTime && (
-                                    <p className="text-xs text-destructive font-medium ml-1">{form.formState.errors.startTime.message}</p>
-                                )}
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="returnTime" className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Return Time</Label>
-                                <Input
-                                    id="returnTime"
-                                    type="time"
-                                    className="h-12 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 bg-slate-50/50"
-                                    {...form.register("returnTime")}
-                                />
-                                {form.formState.errors.returnTime && (
-                                    <p className="text-xs text-destructive font-medium ml-1">{form.formState.errors.returnTime.message}</p>
+                                {form.formState.errors.name && (
+                                    <p className="text-xs text-destructive font-medium">{form.formState.errors.name.message}</p>
                                 )}
                             </div>
                         </div>
-                        <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/30 p-4">
+
+                        {/* Configuration Box */}
+                        <div className="grid gap-4 p-4 border rounded-md bg-muted/50">
+                            <div className="grid gap-2">
+                                <Label htmlFor="capacity">Capacity</Label>
+                                <Input
+                                    id="capacity"
+                                    type="number"
+                                    placeholder="Max seats"
+                                    {...form.register("capacity", { valueAsNumber: true })}
+                                />
+                                {form.formState.errors.capacity && (
+                                    <p className="text-xs text-destructive font-medium">{form.formState.errors.capacity.message}</p>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="startTime">Start Time</Label>
+                                    <Input
+                                        id="startTime"
+                                        type="time"
+                                        {...form.register("startTime")}
+                                    />
+                                    {form.formState.errors.startTime && (
+                                        <p className="text-xs text-destructive font-medium">{form.formState.errors.startTime.message}</p>
+                                    )}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="returnTime">Return Time</Label>
+                                    <Input
+                                        id="returnTime"
+                                        type="time"
+                                        {...form.register("returnTime")}
+                                    />
+                                    {form.formState.errors.returnTime && (
+                                        <p className="text-xs text-destructive font-medium">{form.formState.errors.returnTime.message}</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Status Switch */}
+                        <div className="flex items-center justify-between p-3 rounded-md border bg-muted/30">
                             <div className="space-y-0.5">
-                                <Label htmlFor="isActive" className="text-sm font-bold text-slate-800">Active Status</Label>
-                                <p className="text-[10px] text-slate-400 font-medium">
-                                    Enable or disable this route for students.
+                                <Label htmlFor="isActive" className="text-sm cursor-pointer">Active Status</Label>
+                                <p className="text-[10px] text-muted-foreground">
+                                    Visible to students and open for tracking.
                                 </p>
                             </div>
                             <Switch
@@ -183,19 +187,21 @@ export function RouteDialog({
                             />
                         </div>
                     </div>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                        <Button
+
+                    <DialogFooter className="flex-col sm:flex-row gap-3 pt-2">
+                        <Button 
                             type="button"
-                            variant="ghost"
-                            onClick={() => onOpenChange(false)}
-                            disabled={isSubmitting}
-                            className="rounded-xl h-12 font-bold text-slate-500"
+                            variant="outline" 
+                            onClick={() => onOpenChange(false)} 
+                            className="gap-2 w-full sm:w-auto"
                         >
                             Cancel
+                            <Kbd>Esc</Kbd>
                         </Button>
-                        <Button type="submit" disabled={isSubmitting} className="rounded-xl h-12 px-8 font-bold shadow-lg shadow-primary/20 transition-all active:scale-95">
+                        <Button type="submit" disabled={isSubmitting} className="gap-2 w-full sm:w-auto">
                             {isSubmitting && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
                             {route ? "Save Changes" : "Create Route"}
+                            <Kbd>↵</Kbd>
                         </Button>
                     </DialogFooter>
                 </form>

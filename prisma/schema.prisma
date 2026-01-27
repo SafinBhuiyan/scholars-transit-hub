@@ -24,9 +24,59 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  noticesCreated Notice[]    @relation("NoticeCreator")
+  noticesRead    UserNotice[]
 
   @@unique([email])
   @@map("user")
+}
+
+enum NoticeType {
+  INFO
+  WARNING
+  SUCCESS
+  DANGER
+}
+
+enum NoticeTarget {
+  ALL
+  ROLE
+  SPECIFIC
+}
+
+model Notice {
+  id           String       @id @default(uuid())
+  title        String
+  content      String       @db.Text
+  type         NoticeType   @default(INFO)
+  target       NoticeTarget @default(ALL)
+  targetRoles  Role[]
+  targetUsers  String[]     // Array of user IDs
+  isPublished  Boolean      @default(false)
+  isPinned     Boolean      @default(false)
+  expiryDate   DateTime?
+  createdById  String
+  createdBy    User         @relation("NoticeCreator", fields: [createdById], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  userNotices  UserNotice[]
+
+  @@index([createdById])
+  @@map("notice")
+}
+
+model UserNotice {
+  id        String   @id @default(uuid())
+  noticeId  String
+  userId    String
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  notice    Notice   @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([noticeId, userId])
+  @@index([userId])
+  @@map("user_notice")
 }
 
 model Session {

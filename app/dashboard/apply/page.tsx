@@ -295,6 +295,8 @@ export default function ApplyPage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const [routes, setRoutes] = React.useState<any[]>([])
   const [loadingRoutes, setLoadingRoutes] = React.useState(true)
+  const [existingApplication, setExistingApplication] = React.useState<any>(null)
+  const [loadingApplication, setLoadingApplication] = React.useState(true)
 
   // Fetch routes from API on mount
   React.useEffect(() => {
@@ -314,6 +316,24 @@ export default function ApplyPage() {
     fetchRoutes()
   }, [])
 
+  // Fetch existing application on mount
+  React.useEffect(() => {
+    async function fetchApplication() {
+      try {
+        const response = await fetch("/api/applications")
+        const data = await response.json()
+        if (response.ok && data.application) {
+          setExistingApplication(data.application)
+        }
+      } catch (error) {
+        console.error("Failed to fetch application:", error)
+      } finally {
+        setLoadingApplication(false)
+      }
+    }
+    fetchApplication()
+  }, [])
+
   const schema = applicantType === "STUDENT" ? studentSchema : staffSchema
   
   const { register, handleSubmit, setValue, getValues, formState: { errors }, trigger } = useForm<any>({
@@ -321,7 +341,7 @@ export default function ApplyPage() {
     mode: "onBlur"
   })
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: any) => {
     if (!isPhoneVerified) {
       toast.error("Please verify your phone number")
       return
@@ -376,12 +396,65 @@ export default function ApplyPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Apply for Transport Pass</h1>
-        <p className="text-muted-foreground">Complete the form below to apply for your transport pass.</p>
-      </div>
+      {!loadingApplication && !existingApplication && (
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Apply for Transport Pass</h1>
+          <p className="text-muted-foreground">Complete the form below to apply for your transport pass.</p>
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {loadingApplication ? (
+        <div className="flex items-center justify-center h-64">
+          <IconLoader className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : existingApplication ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <IconId className="h-5 w-5" />
+              Active Application
+            </CardTitle>
+            <CardDescription>
+              You already have an active transport pass application.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-2 p-4 border rounded-md bg-muted/50">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Status:</span>
+                <Badge
+                  variant="outline"
+                  className={`
+                    ${existingApplication.status === "APPROVED" ? "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/25" : ""}
+                    ${existingApplication.status === "REJECTED" ? "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25" : ""}
+                    ${existingApplication.status === "WAITLIST" ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/25" : ""}
+                  `}
+                >
+                  {existingApplication.status}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Applied Date:</span>
+                <span className="text-sm text-muted-foreground">
+                  {new Date(existingApplication.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              {existingApplication.route && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Route:</span>
+                  <span className="text-sm text-muted-foreground">{existingApplication.route.name}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => router.push("/dashboard/pass")}>
+                View My Pass
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Section 1: Apply As */}
         <Card>
           <CardHeader>
@@ -626,6 +699,7 @@ export default function ApplyPage() {
           </Button>
         </div>
       </form>
+      )}
     </div>
   )
 }

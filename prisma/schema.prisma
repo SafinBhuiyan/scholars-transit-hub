@@ -116,27 +116,27 @@ model Account {
 }
 
 model Verification {
-  id         String   @id
-  identifier String
+  id         String   @id @default(cuid())
+  identifier String   @unique
   value      String
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  @@index([identifier])
   @@map("verification")
 }
 
 model Route {
-  id           String        @id @default(uuid())
+  id           String             @id @default(uuid())
   name         String
   capacity     Int
   startTime    String
   returnTime   String
-  isActive     Boolean       @default(true)
+  isActive     Boolean            @default(true)
   pickupPoints PickupPoint[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  applications TransportApplication[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
   @@map("route")
 }
@@ -154,4 +154,46 @@ model PickupPoint {
 
   @@index([routeId])
   @@map("pickup_point")
+}
+
+enum ApplicantType {
+  STUDENT
+  ACADEMIC
+  ADMINISTRATIVE
+}
+
+enum ApplicationStatus {
+  WAITLIST
+  APPROVED
+  REJECTED
+}
+
+model TransportApplication {
+  id            String   @id @default(cuid())
+  userId        String
+
+  applicantType ApplicantType
+
+  fullName      String
+  department    String
+  batch         String?
+  studentId     String?
+
+  phone         String
+  phoneVerified Boolean  @default(false)
+
+  idCardUrl     String
+
+  routeId       String
+  route         Route    @relation(fields: [routeId], references: [id])
+  pickupPointId String
+
+  status        ApplicationStatus @default(WAITLIST)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([routeId])
+  @@map("transport_application")
 }

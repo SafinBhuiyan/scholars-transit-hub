@@ -27,6 +27,11 @@ export function SiteHeader() {
 
   const segmentMap: Record<string, string> = {
     "routes": "Routes & Pickup Points",
+    "apply": "Apply for Transport",
+    "pass": "My Transport Pass",
+    "payments": "Payments",
+    "notices": "Notices",
+    "profile": "Profile",
   }
 
   return (

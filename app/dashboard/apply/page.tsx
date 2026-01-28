@@ -1,0 +1,631 @@
+"use client"
+
+import * as React from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { IconLoader, IconCheck, IconPhone, IconMapPin, IconRoute, IconUser, IconId } from "@tabler/icons-react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+
+const applicantTypes = [
+  { value: "STUDENT", label: "Student" },
+  { value: "ACADEMIC", label: "Academic Staff" },
+  { value: "ADMINISTRATIVE", label: "Administrative Staff" },
+]
+
+// Phone verification component
+function PhoneVerification({ 
+  phone, 
+  setPhone, 
+  isVerified, 
+  setIsVerified 
+}: { 
+  phone: string
+  setPhone: (phone: string) => void
+  isVerified: boolean
+  setIsVerified: (verified: boolean) => void
+}) {
+  const [otp, setOtp] = React.useState("")
+  const [isSending, setIsSending] = React.useState(false)
+  const [isVerifying, setIsVerifying] = React.useState(false)
+  const [resendTimer, setResendTimer] = React.useState(0)
+
+  React.useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setInterval(() => setResendTimer(prev => prev - 1), 1000)
+      return () => clearInterval(timer)
+    }
+  }, [resendTimer])
+
+  const handleSendOtp = async () => {
+    if (!phone || phone.length < 10) {
+      toast.error("Please enter a valid phone number")
+      return
+    }
+    
+    setIsSending(true)
+    
+    try {
+      const response = await fetch("/api/sms/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to send OTP")
+      }
+
+      toast.success("OTP sent to your phone")
+      setResendTimer(60)
+      setOtp("")
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.length < 4) {
+      toast.error("Please enter the OTP")
+      return
+    }
+    
+    setIsVerifying(true)
+    
+    try {
+      const response = await fetch("/api/sms/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, otp }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to verify OTP")
+      }
+
+      setIsVerified(true)
+      toast.success("Phone number verified!")
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setIsVerifying(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <IconPhone className="h-4 w-4 text-muted-foreground" />
+        <Label>Phone Number</Label>
+        {isVerified && (
+          <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200">
+            <IconCheck className="h-3 w-3" /> Verified
+          </Badge>
+        )}
+      </div>
+      
+      <div className="flex gap-2">
+        <Input
+          type="tel"
+          placeholder="+8801XXXXXXXXX"
+          value={phone}
+          onChange={(e) => {
+            setPhone(e.target.value)
+            setIsVerified(false)
+          }}
+          disabled={isVerified}
+          className="flex-1"
+        />
+        {!isVerified && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSendOtp}
+            disabled={isSending || resendTimer > 0}
+          >
+            {isSending ? (
+              <IconLoader className="h-4 w-4 animate-spin" />
+            ) : resendTimer > 0 ? (
+              `${resendTimer}s`
+            ) : (
+              "Send OTP"
+            )}
+          </Button>
+        )}
+      </div>
+      
+      {!isVerified && (
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            placeholder="Enter OTP"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+            maxLength={6}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            onClick={handleVerifyOtp}
+            disabled={isVerifying || !otp}
+          >
+            {isVerifying ? (
+              <IconLoader className="h-4 w-4 animate-spin" />
+            ) : (
+              "Verify"
+            )}
+          </Button>
+        </div>
+      )}
+      
+      <p className="text-xs text-muted-foreground">
+        Phone verification is required before submitting your application.
+      </p>
+    </div>
+  )
+}
+
+// Route and pickup selection component
+function RouteSelection({
+  selectedRoute,
+  setSelectedRoute,
+  selectedPickup,
+  setSelectedPickup,
+  routes,
+  loadingRoutes,
+  setValue,
+}: {
+  selectedRoute: string
+  setSelectedRoute: (route: string) => void
+  selectedPickup: string
+  setSelectedPickup: (pickup: string) => void
+  routes: any[]
+  loadingRoutes: boolean
+  setValue: (name: string, value: any) => void
+}) {
+  const selectedRouteData = routes.find(r => r.id === selectedRoute)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <IconRoute className="h-4 w-4 text-muted-foreground" />
+        <Label>Transport Selection</Label>
+      </div>
+      
+      <Select 
+        value={selectedRoute} 
+        onValueChange={(value) => {
+          setSelectedRoute(value)
+          setSelectedPickup("")
+          setValue("routeId", value)
+        }}
+        disabled={loadingRoutes}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder={loadingRoutes ? "Loading routes..." : "Select a route"} />
+        </SelectTrigger>
+        <SelectContent>
+          {loadingRoutes ? (
+            <div className="p-2 text-center text-sm text-muted-foreground">
+              Loading...
+            </div>
+          ) : routes.filter(r => r.isActive).length > 0 ? (
+            routes.filter(r => r.isActive).map((route) => (
+              <SelectItem key={route.id} value={route.id}>
+                {route.name} ({route.startTime} - {route.returnTime})
+              </SelectItem>
+            ))
+          ) : (
+            <div className="p-2 text-center text-sm text-muted-foreground">
+              No routes available
+            </div>
+          )}
+        </SelectContent>
+      </Select>
+      
+      {selectedRoute && selectedRouteData && selectedRouteData.pickupPoints.length > 0 && (
+        <Select value={selectedPickup} onValueChange={(value) => {
+          setSelectedPickup(value)
+          setValue("pickupPointId", value)
+        }}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a pickup point" />
+          </SelectTrigger>
+          <SelectContent>
+            {selectedRouteData.pickupPoints.map((point: any) => (
+              <SelectItem key={point.id} value={point.id}>
+                {point.name} {point.landmark && ` - ${point.landmark}`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
+  )
+}
+
+// Main form schema
+const studentSchema = z.object({
+  applicantType: z.enum(["STUDENT", "ACADEMIC", "ADMINISTRATIVE"]),
+  fullName: z.string().min(2, "Full name is required"),
+  department: z.string().min(1, "Department is required"),
+  batch: z.string().min(1, "Batch is required"),
+  studentId: z.string().min(1, "Student ID is required"),
+  idCardUrl: z.string().min(1, "ID Card photo is required"),
+  routeId: z.string().min(1, "Route is required"),
+  pickupPointId: z.string().min(1, "Pickup point is required"),
+})
+
+const staffSchema = z.object({
+  applicantType: z.enum(["STUDENT", "ACADEMIC", "ADMINISTRATIVE"]),
+  fullName: z.string().min(2, "Full name is required"),
+  department: z.string().min(1, "Department is required"),
+  idCardUrl: z.string().min(1, "ID Card photo is required"),
+  routeId: z.string().min(1, "Route is required"),
+  pickupPointId: z.string().min(1, "Pickup point is required"),
+})
+
+type StudentFormData = z.infer<typeof studentSchema>
+type StaffFormData = z.infer<typeof staffSchema>
+
+export default function ApplyPage() {
+  const router = useRouter()
+  const [applicantType, setApplicantType] = React.useState<string>("STUDENT")
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [phone, setPhone] = React.useState("")
+  const [isPhoneVerified, setIsPhoneVerified] = React.useState(false)
+  const [selectedRoute, setSelectedRoute] = React.useState("")
+  const [selectedPickup, setSelectedPickup] = React.useState("")
+  const [idCardUrl, setIdCardUrl] = React.useState("")
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const [routes, setRoutes] = React.useState<any[]>([])
+  const [loadingRoutes, setLoadingRoutes] = React.useState(true)
+
+  // Fetch routes from API on mount
+  React.useEffect(() => {
+    async function fetchRoutes() {
+      try {
+        const response = await fetch("/api/routes/public")
+        const data = await response.json()
+        if (response.ok) {
+          setRoutes(data.routes || [])
+        }
+      } catch (error) {
+        console.error("Failed to fetch routes:", error)
+      } finally {
+        setLoadingRoutes(false)
+      }
+    }
+    fetchRoutes()
+  }, [])
+
+  const schema = applicantType === "STUDENT" ? studentSchema : staffSchema
+  
+  const { register, handleSubmit, setValue, getValues, formState: { errors }, trigger } = useForm<any>({
+    resolver: zodResolver(schema),
+    mode: "onBlur"
+  })
+
+  const onSubmit = async (data) => {
+    if (!isPhoneVerified) {
+      toast.error("Please verify your phone number")
+      return
+    }
+
+    if (!selectedRoute) {
+      toast.error("Please select a route")
+      return
+    }
+
+    if (!selectedPickup) {
+      toast.error("Please select a pickup point")
+      return
+    }
+
+    if (!idCardUrl) {
+      toast.error("Please upload your ID card photo")
+      return
+    }
+
+    setIsSubmitting(true)
+    const body = {
+      ...data,
+      phone,
+      phoneVerified: isPhoneVerified,
+    }
+    if (applicantType !== "STUDENT") {
+      delete body.batch
+      delete body.studentId
+    }
+    try {
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to submit application")
+      }
+
+      toast.success("Application submitted successfully!")
+      router.push("/dashboard/pass")
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-1 flex-col gap-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Apply for Transport Pass</h1>
+        <p className="text-muted-foreground">Complete the form below to apply for your transport pass.</p>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Section 1: Apply As */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <IconUser className="h-5 w-5" />
+              Apply As
+            </CardTitle>
+            <CardDescription>Select your applicant type to see the required fields.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup 
+              value={applicantType} 
+              onValueChange={(value) => {
+                setApplicantType(value)
+                setIsPhoneVerified(false)
+                setPhone("")
+                setValue("applicantType", value)
+              }}
+              className="flex flex-col sm:flex-row gap-4"
+            >
+              {applicantTypes.map((type) => (
+                <div key={type.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={type.value} id={type.value} />
+                  <Label htmlFor={type.value} className="cursor-pointer">{type.label}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+            <input type="hidden" {...register("applicantType")} value={applicantType} />
+          </CardContent>
+        </Card>
+
+        {/* Section 2: Identity & Verification */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <IconId className="h-5 w-5" />
+              Identity Information
+            </CardTitle>
+            <CardDescription>
+              {applicantType === "STUDENT" 
+                ? "Enter your student details for verification."
+                : "Enter your staff details for verification."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input 
+                  id="fullName" 
+                  placeholder="As per official records"
+                  {...register("fullName")}
+                />
+                {errors.fullName && (
+                  <p className="text-sm text-red-500">{errors.fullName.message as string}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="department">Department</Label>
+                <Select onValueChange={(value) => setValue("department", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CSE">Computer Science & Engineering</SelectItem>
+                    <SelectItem value="EEE">Electrical & Electronic Engineering</SelectItem>
+                    <SelectItem value="BBA">Business Administration</SelectItem>
+                    <SelectItem value="ENG">English</SelectItem>
+                    <SelectItem value="ARC">Architecture</SelectItem>
+                    <SelectItem value="IPE">Industrial & Production Engineering</SelectItem>
+                    <SelectItem value="FT">Food Technology & Nutritional Science</SelectItem></SelectContent>
+                </Select>
+                {errors.department && (
+                  <p className="text-sm text-red-500">{errors.department.message as string}</p>
+                )}
+              </div>
+            </div>
+
+            {applicantType === "STUDENT" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="batch">Batch</Label>
+                  <Input 
+                    id="batch" 
+                    placeholder="e.g., 10th"
+                    {...register("batch")}
+                  />
+                  {errors.batch && (
+                    <p className="text-sm text-red-500">{errors.batch.message as string}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="studentId">Student ID</Label>
+                  <Input 
+                    id="studentId" 
+                    placeholder="e.g., 212010158"
+                    {...register("studentId")}
+                  />
+                  {errors.studentId && (
+                    <p className="text-sm text-red-500">{errors.studentId.message as string}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Phone Verification */}
+            <PhoneVerification 
+              phone={phone}
+              setPhone={setPhone}
+              isVerified={isPhoneVerified}
+              setIsVerified={setIsPhoneVerified}
+            />
+
+            <div className="space-y-2">
+              <Label>ID Card Photo</Label>
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+
+                    // Validate file type
+                    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+                    if (!allowedTypes.includes(file.type)) {
+                      toast.error('Only JPEG, PNG, and WebP images are allowed')
+                      return
+                    }
+
+                    // Validate file size (max 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast.error('File size must be less than 5MB')
+                      return
+                    }
+
+                    const formData = new FormData()
+                    formData.append('file', file)
+
+                    toast.loading('Uploading...')
+
+                    try {
+                      const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData,
+                      })
+
+                      const result = await response.json()
+
+                      if (!response.ok) {
+                        throw new Error(result.error || 'Upload failed')
+                      }
+
+                      setIdCardUrl(result.url)
+                      setValue("idCardUrl", result.url, { shouldValidate: true })
+                      toast.dismiss()
+                      toast.success('ID card uploaded successfully!')
+                    } catch (error: any) {
+                      toast.dismiss()
+                      toast.error(error.message || 'Upload failed')
+                    }
+                  }}
+                />
+                {idCardUrl ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-16 w-24 rounded-lg bg-green-100 flex items-center justify-center">
+                      <IconCheck className="h-8 w-8 text-green-600" />
+                    </div>
+                    <p className="text-sm text-green-600 font-medium">Photo uploaded!</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Change Photo
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                    <IconId className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      Upload your ID card photo (front side)
+                    </p>
+                    <Button type="button" variant="outline" size="sm" className="mt-2">
+                      Choose File
+                    </Button>
+                  </div>
+                )}
+                <input 
+                  type="hidden" 
+                  {...register("idCardUrl")} 
+                />
+              </div>
+              {errors.idCardUrl && (
+                <p className="text-sm text-red-500">{errors.idCardUrl.message as string}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Section 3: Transport Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <IconMapPin className="h-5 w-5" />
+              Transport Selection
+            </CardTitle>
+            <CardDescription>Choose your preferred route and pickup point.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RouteSelection
+              selectedRoute={selectedRoute}
+              setSelectedRoute={setSelectedRoute}
+              selectedPickup={selectedPickup}
+              setSelectedPickup={setSelectedPickup}
+              routes={routes}
+              loadingRoutes={loadingRoutes}
+              setValue={setValue}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Submit Button */}
+        <div className="flex justify-end gap-4">
+          <Button type="button" variant="outline" onClick={() => router.back()}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting || !isPhoneVerified}>
+            {isSubmitting ? (
+              <>
+                <IconLoader className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit Application"
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}

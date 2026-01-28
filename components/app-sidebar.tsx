@@ -3,25 +3,19 @@
 import * as React from "react"
 import {
   IconCamera,
-  IconChartBar,
   IconDashboard,
   IconDatabase,
-  IconFileAi,
   IconFileDescription,
-  IconFileWord,
-  IconFolder,
   IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
+  IconPlus,
   IconReport,
+  IconRoute,
   IconSearch,
   IconSettings,
-  IconUsers,
-  IconPlus,
-  IconRoute,
-  IconCreditCard,
   IconTicket,
+  IconCreditCard,
   IconSpeakerphone,
+  IconUsers,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -125,28 +119,27 @@ const roleBasedNavigation = {
         icon: IconDashboard,
       },
       {
-        title: "Analytics",
-        url: "#",
-        icon: IconChartBar,
+        title: "Apply for Transport",
+        url: "/dashboard/apply",
+        icon: IconPlus,
       },
       {
-        title: "Projects",
-        url: "#",
-        icon: IconFolder,
+        title: "My Transport Pass",
+        url: "/dashboard/pass",
+        icon: IconTicket,
+      },
+      {
+        title: "Payments",
+        url: "/dashboard/payments",
+        icon: IconCreditCard,
+      },
+      {
+        title: "Notices",
+        url: "/dashboard/notices",
+        icon: IconSpeakerphone,
       },
     ],
-    documents: [
-      {
-        name: "Data Library",
-        url: "#",
-        icon: IconDatabase,
-      },
-      {
-        name: "Word Assistant",
-        url: "#",
-        icon: IconFileWord,
-      },
-    ],
+    documents: [],
   },
 }
 
@@ -197,8 +190,12 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navigation.navMain} />
-        <NavDocuments items={navigation.documents} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
+        {role !== "USER" && (
+          <>
+            <NavDocuments items={navigation.documents} />
+            <NavSecondary items={navSecondary} className="mt-auto" />
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

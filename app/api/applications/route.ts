@@ -34,6 +34,19 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Batch and Student ID are required for students" }, { status: 400 })
         }
 
+        // Check if student ID is already used by another application
+        if (applicantType === "STUDENT" && studentId) {
+            const existingStudentId = await prisma.transportApplication.findFirst({
+                where: {
+                    studentId: studentId
+                }
+            })
+
+            if (existingStudentId) {
+                return NextResponse.json({ error: "This Student ID is already registered for a transport pass" }, { status: 400 })
+            }
+        }
+
         // Check if user already has a pending or approved application
         const existingApplication = await prisma.transportApplication.findFirst({
             where: {

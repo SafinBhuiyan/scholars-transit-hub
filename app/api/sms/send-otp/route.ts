@@ -27,14 +27,37 @@ async function sendSMS(phone: string, message: string): Promise<boolean> {
 
     const url = `${SMS_API_URL}?api_key=${SMS_API_KEY}&type=text&contacts=${formattedPhone}&senderid=${SENDER_ID}&msg=${encodeURIComponent(message)}`
 
+    console.log("Sending SMS to:", formattedPhone)
+    console.log("SMS URL:", url)
+
     const response = await fetch(url, {
       method: "GET",
     })
 
-    const data = await response.json()
+    console.log("SMS Response Status:", response.status)
+
+    // Get response text first to handle both JSON and plain text responses
+    const responseText = await response.text()
+    console.log("SMS Response Body:", responseText)
+
+    // Try to parse as JSON, if fails, treat as plain text
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch {
+      // If not JSON, check if response was successful based on status code
+      if (response.ok) {
+        console.log("SMS sent successfully (non-JSON response)")
+        return true
+      }
+      console.error("SMS API returned non-JSON response with error status:", response.status)
+      return false
+    }
 
     // MRAM API response format: { code: number, message: string }
-    if (data.code === 202 || data.code === 200) {
+    // Also handle other possible success codes
+    if (data.code === 202 || data.code === 200 || data.code === 1000 || data.status === "success" || data.success === true) {
+      console.log("SMS sent successfully")
       return true
     }
 

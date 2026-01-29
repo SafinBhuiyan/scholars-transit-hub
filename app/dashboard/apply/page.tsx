@@ -207,8 +207,8 @@ function RouteSelection({
         <Label>Transport Selection</Label>
       </div>
       
-      <Select 
-        value={selectedRoute} 
+      <Select
+        value={selectedRoute}
         onValueChange={(value) => {
           setSelectedRoute(value)
           setSelectedPickup("")
@@ -216,7 +216,7 @@ function RouteSelection({
         }}
         disabled={loadingRoutes}
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full">
           <SelectValue placeholder={loadingRoutes ? "Loading routes..." : "Select a route"} />
         </SelectTrigger>
         <SelectContent>
@@ -227,7 +227,7 @@ function RouteSelection({
           ) : routes.filter(r => r.isActive).length > 0 ? (
             routes.filter(r => r.isActive).map((route) => (
               <SelectItem key={route.id} value={route.id}>
-                {route.name} ({route.startTime} - {route.returnTime})
+                {route.name}
               </SelectItem>
             ))
           ) : (
@@ -243,7 +243,7 @@ function RouteSelection({
           setSelectedPickup(value)
           setValue("pickupPointId", value)
         }}>
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select a pickup point" />
           </SelectTrigger>
           <SelectContent>
@@ -335,8 +335,8 @@ export default function ApplyPage() {
   }, [])
 
   const schema = applicantType === "STUDENT" ? studentSchema : staffSchema
-  
-  const { register, handleSubmit, setValue, getValues, formState: { errors }, trigger } = useForm<any>({
+
+  const { register, handleSubmit, setValue, formState: { errors }, trigger } = useForm<any>({
     resolver: zodResolver(schema),
     mode: "onBlur"
   })
@@ -440,10 +440,27 @@ export default function ApplyPage() {
                 </span>
               </div>
               {existingApplication.route && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Route:</span>
-                  <span className="text-sm text-muted-foreground">{existingApplication.route.name}</span>
-                </div>
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Route:</span>
+                    <span className="text-sm text-muted-foreground">{existingApplication.route.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Schedule:</span>
+                    <span className="text-sm text-muted-foreground">
+                      {(() => {
+                        const formatTime12h = (time: string) => {
+                          if (!time) return ""
+                          const [hours, minutes] = time.split(":").map(Number)
+                          const period = hours >= 12 ? "PM" : "AM"
+                          const hours12 = hours % 12 || 12
+                          return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`
+                        }
+                        return `${formatTime12h(existingApplication.route.startTime)} - ${formatTime12h(existingApplication.route.returnTime)}`
+                      })()}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
             <div className="flex justify-end">
@@ -465,8 +482,8 @@ export default function ApplyPage() {
             <CardDescription>Select your applicant type to see the required fields.</CardDescription>
           </CardHeader>
           <CardContent>
-            <RadioGroup 
-              value={applicantType} 
+            <RadioGroup
+              value={applicantType}
               onValueChange={(value) => {
                 setApplicantType(value)
                 setIsPhoneVerified(false)
@@ -516,7 +533,7 @@ export default function ApplyPage() {
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                 <Select onValueChange={(value) => setValue("department", value)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
@@ -550,8 +567,8 @@ export default function ApplyPage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="studentId">Student ID</Label>
-                  <Input 
-                    id="studentId" 
+                  <Input
+                    id="studentId"
                     placeholder="e.g., 212010158"
                     {...register("studentId")}
                   />

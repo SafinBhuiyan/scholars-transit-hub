@@ -142,15 +142,16 @@ model Route {
 }
 
 model PickupPoint {
-  id        String   @id @default(uuid())
-  name      String
-  landmark  String?
-  order     Int
-  routeId   String
-  route     Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String                 @id @default(uuid())
+  name                  String
+  landmark              String?
+  order                 Int
+  routeId               String
+  route                 Route                  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  isActive              Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  transportApplications TransportApplication[]
 
   @@index([routeId])
   @@map("pickup_point")
@@ -186,8 +187,9 @@ model TransportApplication {
   idCardUrl String
 
   routeId       String
-  route         Route  @relation(fields: [routeId], references: [id])
+  route         Route       @relation(fields: [routeId], references: [id])
   pickupPointId String
+  pickupPoint   PickupPoint @relation(fields: [pickupPointId], references: [id])
 
   status ApplicationStatus @default(WAITLIST)
 

@@ -29,6 +29,7 @@ export default async function ApplicationsPage() {
         },
       },
       user: true,
+      pickupPoint: true,
     },
   })
 

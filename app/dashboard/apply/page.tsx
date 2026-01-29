@@ -11,7 +11,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { IconLoader, IconCheck, IconPhone, IconMapPin, IconRoute, IconUser, IconId } from "@tabler/icons-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
+import { IconLoader, IconCheck, IconPhone, IconRoute, IconUser, IconId, IconClock } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -394,6 +396,15 @@ export default function ApplyPage() {
     }
   }
 
+  // Helper function for 12-hour time format
+  const formatTime12h = (time: string) => {
+    if (!time) return "--:--"
+    const [hours, minutes] = time.split(":").map(Number)
+    const period = hours >= 12 ? "PM" : "AM"
+    const hours12 = hours % 12 || 12
+    return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`
+  }
+
   return (
     <div className="flex flex-1 flex-col gap-6">
       {!loadingApplication && !existingApplication && (
@@ -408,68 +419,129 @@ export default function ApplyPage() {
           <IconLoader className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : existingApplication ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <IconId className="h-5 w-5" />
-              Active Application
-            </CardTitle>
-            <CardDescription>
-              You already have an active transport pass application.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col gap-2 p-4 border rounded-md bg-muted/50">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Status:</span>
-                <Badge
-                  variant="outline"
-                  className={`
-                    ${existingApplication.status === "APPROVED" ? "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/25" : ""}
-                    ${existingApplication.status === "REJECTED" ? "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25" : ""}
-                    ${existingApplication.status === "WAITLIST" ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/25" : ""}
-                  `}
-                >
-                  {existingApplication.status}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Applied Date:</span>
-                <span className="text-sm text-muted-foreground">
-                  {new Date(existingApplication.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-              {existingApplication.route && (
-                <>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Route:</span>
-                    <span className="text-sm text-muted-foreground">{existingApplication.route.name}</span>
+        <div className="flex justify-center">
+          <div className="w-full max-w-2xl">
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                {/* Header Section */}
+                <div className="bg-primary/5 p-6 border-b">
+                  <div className="flex items-center gap-4 mb-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={existingApplication.user?.image || ""} />
+                      <AvatarFallback>
+                        <IconUser className="h-6 w-6" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-lg font-bold truncate">{existingApplication.fullName}</h2>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {existingApplication.applicantType === "STUDENT" ? "Student" : existingApplication.applicantType === "ACADEMIC" ? "Academic Staff" : "Administrative Staff"}
+                        {existingApplication.batch && ` • ${existingApplication.batch} Batch`}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">{existingApplication.department}</p>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Schedule:</span>
-                    <span className="text-sm text-muted-foreground">
-                      {(() => {
-                        const formatTime12h = (time: string) => {
-                          if (!time) return ""
-                          const [hours, minutes] = time.split(":").map(Number)
-                          const period = hours >= 12 ? "PM" : "AM"
-                          const hours12 = hours % 12 || 12
-                          return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`
-                        }
-                        return `${formatTime12h(existingApplication.route.startTime)} - ${formatTime12h(existingApplication.route.returnTime)}`
-                      })()}
-                    </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`
+                        ${existingApplication.status === "APPROVED" ? "bg-green-500/15 text-green-700 border-green-500/25" : ""}
+                        ${existingApplication.status === "REJECTED" ? "bg-red-500/15 text-red-700 border-red-500/25" : ""}
+                        ${existingApplication.status === "WAITLIST" ? "bg-yellow-500/15 text-yellow-700 border-yellow-500/25" : ""}
+                      `}
+                    >
+                      {existingApplication.status}
+                    </Badge>
+                    {existingApplication.phoneVerified && (
+                      <Badge variant="default" className="gap-1 bg-green-600">
+                        <IconCheck className="h-3 w-3" />
+                        Phone Verified
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="gap-1">
+                      <IconClock className="h-3 w-3" />
+                      {new Date(existingApplication.createdAt).toLocaleDateString("en-US", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric"
+                      })}
+                    </Badge>
+                    {existingApplication.status === "APPROVED" && existingApplication.passNumber && (
+                      <Badge variant="outline" className="gap-1">
+                        <IconId className="h-3 w-3" />
+                        {existingApplication.passNumber}
+                      </Badge>
+                    )}
                   </div>
-                </>
-              )}
-            </div>
-            <div className="flex justify-end">
-              <Button onClick={() => router.push("/dashboard/pass")}>
-                View My Pass
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+
+                {/* Details Section */}
+                <div className="p-6 space-y-6">
+                  {existingApplication.idCardUrl && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground">ID Card</Label>
+                      <div className="border rounded-lg bg-muted/30 p-4">
+                        <img
+                          src={existingApplication.idCardUrl}
+                          alt="ID Card"
+                          className="max-w-full h-auto rounded-lg mx-auto"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {existingApplication.applicantType === "STUDENT" && (
+                      <>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Batch</Label>
+                          <p className="text-sm font-medium">{existingApplication.batch || "—"}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Student ID</Label>
+                          <p className="text-sm font-medium">{existingApplication.studentId || "—"}</p>
+                        </div>
+                      </>
+                    )}
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Phone</Label>
+                      <p className="text-sm font-medium">{existingApplication.phone}</p>
+                    </div>
+                  </div>
+
+                  {existingApplication.route && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Route</Label>
+                        <p className="text-sm font-medium">{existingApplication.route.name}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Pickup Point</Label>
+                        <p className="text-sm font-medium">{existingApplication.pickupPoint?.name || "—"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Morning Trip</Label>
+                        <p className="text-sm font-medium">{formatTime12h(existingApplication.route.startTime)}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Return Trip</Label>
+                        <p className="text-sm font-medium">{formatTime12h(existingApplication.route.returnTime)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Button */}
+                <div className="p-6 border-t bg-muted/20">
+                  <Button className="w-full" onClick={() => router.push("/dashboard/pass")}>
+                    <IconId className="mr-2 h-4 w-4" />
+                    View My Pass
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Section 1: Apply As */}
@@ -681,7 +753,6 @@ export default function ApplyPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <IconMapPin className="h-5 w-5" />
               Transport Selection
             </CardTitle>
             <CardDescription>Choose your preferred route and pickup point.</CardDescription>

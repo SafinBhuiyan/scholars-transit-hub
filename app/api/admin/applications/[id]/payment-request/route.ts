@@ -5,7 +5,7 @@ import { headers } from "next/headers"
 
 export async function POST(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await auth.api.getSession({ headers: await headers() })
@@ -13,6 +13,8 @@ export async function POST(
         if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
+
+        const { id } = await params
 
         const body = await request.json()
         const { semester, amount } = body
@@ -27,7 +29,7 @@ export async function POST(
 
         // Check if application exists
         const application = await prisma.transportApplication.findUnique({
-            where: { id: params.id }
+            where: { id }
         })
 
         if (!application) {
@@ -41,7 +43,7 @@ export async function POST(
 
         // For now, we'll just log the payment request
         console.log("Payment request sent:", {
-            applicationId: params.id,
+            applicationId: id,
             applicantName: application.fullName,
             semester,
             amount,
@@ -52,7 +54,7 @@ export async function POST(
             success: true,
             message: "Payment request sent successfully",
             data: {
-                applicationId: params.id,
+                applicationId: id,
                 semester,
                 amount,
             }

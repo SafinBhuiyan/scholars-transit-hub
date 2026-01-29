@@ -4,8 +4,8 @@ import crypto from "crypto"
 
 // MRAM SMS API configuration
 const SMS_API_URL = "https://msg.mram.com.bd/smsapi"
-const SMS_API_KEY = process.env.SMS_API_KEY || "C4000978695a243500f833.04579997"
-const SENDER_ID = process.env.SMS_SENDER_ID || "8809601017858"
+const SMS_API_KEY = process.env.SMS_API_KEY
+const SENDER_ID = process.env.SMS_SENDER_ID
 
 function generateOTP(): string {
   return crypto.randomInt(100000, 999999).toString()

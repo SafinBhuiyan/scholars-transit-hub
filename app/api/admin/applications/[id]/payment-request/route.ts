@@ -10,7 +10,7 @@ export async function POST(
     try {
         const session = await auth.api.getSession({ headers: await headers() })
 
-        if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR")) {
+        if (!session || session.user.role !== "ADMIN") {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
@@ -27,37 +27,82 @@ export async function POST(
             return NextResponse.json({ error: "Amount must be greater than 0" }, { status: 400 })
         }
 
-        // Check if application exists
+        // Check if application exists and is approved
         const application = await prisma.transportApplication.findUnique({
-            where: { id }
+            where: { id },
+            include: {
+                user: true,
+            },
         })
 
         if (!application) {
             return NextResponse.json({ error: "Application not found" }, { status: 404 })
         }
 
-        // In a real application, you would:
-        // 1. Create a payment record in the database
-        // 2. Send an email/SMS notification to the applicant
-        // 3. Create a payment link or QR code
+        if (application.status !== "APPROVED") {
+            return NextResponse.json(
+                { error: "Only approved applications can have payment requests" },
+                { status: 400 }
+            )
+        }
 
-        // For now, we'll just log the payment request
-        console.log("Payment request sent:", {
+        // Only students need to pay - academic and administrative staff get free passes
+        if (application.applicantType !== "STUDENT") {
+            return NextResponse.json(
+                { error: "Only students need to make payment. Academic and administrative staff get free passes." },
+                { status: 400 }
+            )
+        }
+
+        // Check if payment already exists
+        const existingPayment = await prisma.payment.findFirst({
+            where: {
+                applicationId: id,
+                status: {
+                    in: ["PENDING", "PAID"],
+                },
+            },
+        })
+
+        if (existingPayment) {
+            return NextResponse.json(
+                { error: "Payment request already exists for this application" },
+                { status: 400 }
+            )
+        }
+
+        // Create payment record
+        const payment = await prisma.payment.create({
+            data: {
+                applicationId: id,
+                amount: parseFloat(amount),
+                notes: `Payment for ${semester} semester`,
+                status: "PENDING",
+            },
+            include: {
+                application: {
+                    include: {
+                        user: true,
+                        route: true,
+                        pickupPoint: true,
+                    },
+                },
+            },
+        })
+
+        console.log("Payment request created:", {
+            paymentId: payment.id,
             applicationId: id,
             applicantName: application.fullName,
             semester,
             amount,
-            sentBy: session.user.name,
+            createdBy: session.user.name,
         })
 
         return NextResponse.json({
             success: true,
             message: "Payment request sent successfully",
-            data: {
-                applicationId: id,
-                semester,
-                amount,
-            }
+            data: payment,
         })
     } catch (error) {
         console.error("Error sending payment request:", error)

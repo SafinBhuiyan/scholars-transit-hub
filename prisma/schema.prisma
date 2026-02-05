@@ -169,6 +169,22 @@ enum ApplicationStatus {
   REJECTED
 }
 
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  BKASH
+  NAGAD
+  ROCKET
+  BANK_TRANSFER
+  CARD
+}
+
 model TransportApplication {
   id     String @id @default(cuid())
   userId String
@@ -193,10 +209,42 @@ model TransportApplication {
 
   status ApplicationStatus @default(WAITLIST)
 
+  payments Payment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([routeId])
   @@map("transport_application")
+}
+
+model Payment {
+  id            String               @id @default(cuid())
+  applicationId String
+  application   TransportApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  amount   Float
+  currency String @default("BDT")
+
+  status PaymentStatus  @default(PENDING)
+  method PaymentMethod?
+
+  invoiceId     String? @unique
+  transactionId String?
+  reference     String?
+  senderNumber  String?
+
+  paidAt      DateTime?
+  requestedAt DateTime  @default(now())
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([status])
+  @@index([invoiceId])
+  @@map("payment")
 }

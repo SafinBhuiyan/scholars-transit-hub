@@ -233,7 +233,7 @@ export function ApplicationsTable({
 
       toast.success("Payment request sent successfully")
       setPaymentOpen(false)
-      setSemester("")
+      setSemesterId("")
       setAmount("")
     } catch (error) {
       toast.error("Something went wrong. Please try again.")

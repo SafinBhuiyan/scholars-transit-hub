@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import {
@@ -20,7 +20,7 @@ import {
   IconCalendar,
   IconEye
 } from "@tabler/icons-react"
-import { cn } from "@/lib/utils"
+import { cn, formatDateShort } from "@/lib/utils"
 
 interface NoticeViewDialogProps {
   open: boolean
@@ -73,7 +73,7 @@ export function NoticeViewDialog({ open, onOpenChange, notice }: NoticeViewDialo
                 </Badge>
                 {notice.expiryDate && (
                     <Badge variant="outline" className="gap-1 text-muted-foreground uppercase text-[10px]">
-                        <IconCalendar className="h-3 w-3" /> {new Date(notice.expiryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        <IconCalendar className="h-3 w-3" /> {formatDateShort(notice.expiryDate)}
                     </Badge>
                 )}
             </div>
@@ -90,7 +90,7 @@ export function NoticeViewDialog({ open, onOpenChange, notice }: NoticeViewDialo
 
         <div className="p-6 border-t bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="text-[11px] text-muted-foreground italic">
-                Created by {notice.createdBy?.name || "System"} on {new Date(notice.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                Created by {notice.createdBy?.name || "System"} on {formatDateShort(notice.createdAt)}
             </div>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Close Preview
@@ -100,3 +100,4 @@ export function NoticeViewDialog({ open, onOpenChange, notice }: NoticeViewDialo
     </Dialog>
   )
 }
+

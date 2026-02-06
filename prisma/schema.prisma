@@ -223,6 +223,8 @@ model Payment {
   id            String               @id @default(cuid())
   applicationId String
   application   TransportApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  semesterId    String?
+  semester      Semester?            @relation(fields: [semesterId], references: [id])
 
   amount   Float
   currency String @default("BDT")
@@ -231,6 +233,8 @@ model Payment {
   method PaymentMethod?
 
   invoiceId     String? @unique
+  invoiceNumber String? @unique
+  paymentUrl    String?
   transactionId String?
   reference     String?
   senderNumber  String?
@@ -247,4 +251,16 @@ model Payment {
   @@index([status])
   @@index([invoiceId])
   @@map("payment")
+}
+
+model Semester {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  startDate DateTime
+  endDate   DateTime
+  payments  Payment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("semester")
 }

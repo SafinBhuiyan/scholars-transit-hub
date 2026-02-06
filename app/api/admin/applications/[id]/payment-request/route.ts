@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
+import { resend, renderEmailTemplate } from "@/lib/email"
+import { generateInvoiceNumber } from "@/lib/uddoktapay"
 
 export async function POST(
     request: Request,
@@ -17,9 +19,9 @@ export async function POST(
         const { id } = await params
 
         const body = await request.json()
-        const { semester, amount } = body
+        const { semesterId, amount } = body
 
-        if (!semester || !amount) {
+        if (!semesterId || !amount) {
             return NextResponse.json({ error: "Semester and amount are required" }, { status: 400 })
         }
 
@@ -71,12 +73,22 @@ export async function POST(
             )
         }
 
+        const semester = await prisma.semester.findUnique({
+            where: { id: semesterId },
+        })
+
+        if (!semester) {
+            return NextResponse.json({ error: "Semester not found" }, { status: 404 })
+        }
+
         // Create payment record
         const payment = await prisma.payment.create({
             data: {
                 applicationId: id,
                 amount: parseFloat(amount),
-                notes: `Payment for ${semester} semester`,
+                semesterId: semester.id,
+                invoiceNumber: generateInvoiceNumber(id),
+                notes: `Payment for ${semester.name} semester`,
                 status: "PENDING",
             },
             include: {
@@ -98,6 +110,31 @@ export async function POST(
             amount,
             createdBy: session.user.name,
         })
+
+        try {
+            await resend.emails.send({
+                from: "Scholars Transit Hub <no-reply@divupstudio.online>",
+                to: [application.user.email],
+                subject: "Payment Request for Your Transport Pass",
+                html: renderEmailTemplate({
+                    title: "Payment Request",
+                    greetingName: application.fullName,
+                    bodyHtml: `
+                      <p>Your transport pass application has been approved and a payment request has been created.</p>
+                      <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                        <p style="margin: 0;"><strong>Semester:</strong> ${semester.name}</p>
+                        <p style="margin: 8px 0 0;"><strong>Amount:</strong> ${amount} BDT</p>
+                      </div>
+                      <a href="https://www.divupstudio.online/dashboard/payments" style="display: inline-block; padding: 12px 18px; background: #5C60DB; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                        Pay Now
+                      </a>
+                      <p style="margin-top: 16px;">If you have already paid, you can ignore this message.</p>
+                    `,
+                }),
+            })
+        } catch (emailError) {
+            console.error("Failed to send payment request email:", emailError)
+        }
 
         return NextResponse.json({
             success: true,

@@ -78,6 +78,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { formatDateShort } from "@/lib/utils"
 
 type Payment = {
   id: string
@@ -88,6 +89,9 @@ type Payment = {
   method: "CASH" | "BKASH" | "NAGAD" | "ROCKET" | "BANK_TRANSFER" | "CARD" | null
   transactionId: string | null
   reference: string | null
+  invoiceId: string | null
+  invoiceNumber: string | null
+  paymentUrl: string | null
   paidAt: string | null
   requestedAt: string
   notes: string | null
@@ -125,6 +129,9 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [paymentToDelete, setPaymentToDelete] = React.useState<Payment | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
+  const [uddoktaOpen, setUddoktaOpen] = React.useState(false)
+  const [uddoktaLoading, setUddoktaLoading] = React.useState(false)
+  const [uddoktaData, setUddoktaData] = React.useState<any>(null)
 
   // Form state for editing
   const [editForm, setEditForm] = React.useState({
@@ -201,6 +208,25 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
       toast.error("Failed to delete payment")
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const handleUddoktaDetails = async (payment: Payment) => {
+    setUddoktaOpen(true)
+    setUddoktaLoading(true)
+    setUddoktaData(null)
+    try {
+      const response = await fetch(`/api/admin/payments/${payment.id}/uddoktapay`)
+      const data = await response.json()
+      if (!response.ok) {
+        setUddoktaData(data)
+        return
+      }
+      setUddoktaData(data)
+    } catch (error) {
+      toast.error("Failed to load UddoktaPay details")
+    } finally {
+      setUddoktaLoading(false)
     }
   }
 
@@ -355,7 +381,7 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
         return (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <IconClock className="h-3 w-3" />
-            {date.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
+            {formatDateShort(date)}
           </div>
         )
       },
@@ -373,6 +399,15 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
               className="h-8 w-8 p-0"
             >
               <IconEdit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleUddoktaDetails(payment)}
+              className="h-8 w-8 p-0"
+              title="UddoktaPay Details"
+            >
+              <IconReceipt className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -717,6 +752,71 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* UddoktaPay Details Dialog */}
+      <Dialog open={uddoktaOpen} onOpenChange={setUddoktaOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>UddoktaPay Details</DialogTitle>
+            <DialogDescription>Live details from the payment gateway.</DialogDescription>
+          </DialogHeader>
+          {uddoktaLoading ? (
+            <div className="py-6 text-sm text-muted-foreground">Loading details...</div>
+          ) : uddoktaData?.data ? (
+            <div className="grid gap-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Invoice ID</span>
+                <span className="font-mono">{uddoktaData.data.invoice_id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Amount</span>
+                <span>{uddoktaData.data.amount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Status</span>
+                <span>{uddoktaData.data.status}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Method</span>
+                <span>{uddoktaData.data.payment_method}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Transaction ID</span>
+                <span className="font-mono">{uddoktaData.data.transaction_id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Sender Number</span>
+                <span>{uddoktaData.data.sender_number}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Date</span>
+                <span>{uddoktaData.data.date}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="py-6 text-sm text-muted-foreground">
+              {uddoktaData?.error || uddoktaData?.message || "No details available."}
+              {uddoktaData?.paymentUrl && (
+                <div className="mt-3">
+                  <a
+                    href={uddoktaData.paymentUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary underline"
+                  >
+                    Open Payment Link
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUddoktaOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

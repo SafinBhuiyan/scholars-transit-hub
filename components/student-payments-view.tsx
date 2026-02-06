@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import { IconCreditCard, IconLoader, IconCheck, IconAlertCircle, IconCurrencyTaka, IconReceipt } from "@tabler/icons-react"
@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { formatDateShort } from "@/lib/utils"
 
 type Payment = {
   id: string
@@ -201,7 +202,7 @@ export function StudentPaymentsView({
               <div className="text-right">
                 {getStatusBadge(pendingPayment.status)}
                 <p className="text-xs text-muted-foreground mt-2">
-                  Requested: {new Date(pendingPayment.requestedAt).toLocaleDateString()}
+                  Requested: {formatDateShort(pendingPayment.requestedAt)}
                 </p>
               </div>
             </div>
@@ -271,13 +272,7 @@ export function StudentPaymentsView({
                       </Badge>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      {payment.paidAt
-                        ? new Date(payment.paidAt).toLocaleDateString("en-US", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : "—"}
+                      {payment.paidAt ? formatDateShort(payment.paidAt) : "—"}
                     </p>
                   </div>
                 </div>
@@ -304,3 +299,5 @@ export function StudentPaymentsView({
     </div>
   )
 }
+
+

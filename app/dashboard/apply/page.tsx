@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import { useForm } from "react-hook-form"
@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator"
 import { IconLoader, IconCheck, IconPhone, IconRoute, IconUser, IconId, IconClock } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
+import { cn, formatDateShort } from "@/lib/utils"
 
 const applicantTypes = [
   { value: "STUDENT", label: "Student" },
@@ -460,11 +460,7 @@ export default function ApplyPage() {
                     )}
                     <Badge variant="outline" className="gap-1">
                       <IconClock className="h-3 w-3" />
-                      {new Date(existingApplication.createdAt).toLocaleDateString("en-US", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric"
-                      })}
+                      {formatDateShort(existingApplication.createdAt)}
                     </Badge>
                     {existingApplication.status === "APPROVED" && existingApplication.passNumber && (
                       <Badge variant="outline" className="gap-1">
@@ -791,3 +787,4 @@ export default function ApplyPage() {
     </div>
   )
 }
+

@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
                         user: true,
                     },
                 },
+                semester: true,
             },
         });
 
@@ -60,14 +61,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Generate invoice number if not exists
-        let invoiceNumber = payment.invoiceId;
+        let invoiceNumber = payment.invoiceNumber;
         if (!invoiceNumber) {
             invoiceNumber = generateInvoiceNumber(payment.applicationId);
-
-            // Update payment with invoice number
             await prisma.payment.update({
                 where: { id: paymentId },
-                data: { invoiceId: invoiceNumber },
+                data: { invoiceNumber },
             });
         }
 
@@ -87,7 +86,7 @@ export async function POST(request: NextRequest) {
             metadata: {
                 applicationId: payment.applicationId,
                 userId: payment.application.userId,
-                semester: payment.notes || "",
+                semester: payment.semester?.name || payment.notes || "",
             },
         });
 
@@ -95,10 +94,18 @@ export async function POST(request: NextRequest) {
             throw new Error(checkoutResponse.message || "Failed to create checkout session");
         }
 
+        await prisma.payment.update({
+            where: { id: paymentId },
+            data: {
+                paymentUrl: checkoutResponse.payment_url,
+                invoiceId: checkoutResponse.invoice_id || null,
+            },
+        });
+
         return NextResponse.json({
             success: true,
             paymentUrl: checkoutResponse.payment_url,
-            invoiceId: invoiceNumber,
+            invoiceId: checkoutResponse.invoice_id || null,
         });
     } catch (error: any) {
         console.error("Failed to initiate payment:", error);

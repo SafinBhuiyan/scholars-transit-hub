@@ -83,12 +83,14 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { formatDateShort } from "@/lib/utils"
 
 export const applicationSchema = z.object({
   id: z.string(),
@@ -111,7 +113,20 @@ export const applicationSchema = z.object({
 
 export type Application = z.infer<typeof applicationSchema>
 
-export function ApplicationsTable({ data }: { data: Application[] }) {
+type SemesterOption = {
+  id: string
+  name: string
+  startDate: string
+  endDate: string
+}
+
+export function ApplicationsTable({
+  data,
+  semesters,
+}: {
+  data: Application[]
+  semesters: SemesterOption[]
+}) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [pagination, setPagination] = React.useState({
@@ -124,14 +139,16 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
   const [targetApplication, setTargetApplication] = React.useState<Application | null>(null)
   const [targetStatus, setTargetStatus] = React.useState<Application["status"] | null>(null)
   const [isUpdating, setIsUpdating] = React.useState(false)
+  const [rejectionReason, setRejectionReason] = React.useState("")
   const searchRef = React.useRef<HTMLInputElement>(null)
 
   // Payment Request Dialog State
   const [paymentOpen, setPaymentOpen] = React.useState(false)
   const [paymentApplication, setPaymentApplication] = React.useState<Application | null>(null)
-  const [semester, setSemester] = React.useState("")
+  const [semesterId, setSemesterId] = React.useState("")
   const [amount, setAmount] = React.useState("")
   const [isSendingPayment, setIsSendingPayment] = React.useState(false)
+  const hasSemesters = semesters.length > 0
 
   // Quick View Sheet State
   const [quickViewOpen, setQuickViewOpen] = React.useState(false)
@@ -153,6 +170,7 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
     if (application.status === newStatus) return
     setTargetApplication(application)
     setTargetStatus(newStatus)
+    setRejectionReason("")
     setConfirmOpen(true)
   }
 
@@ -166,7 +184,10 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: targetStatus }),
+        body: JSON.stringify({
+          status: targetStatus,
+          reason: targetStatus === "REJECTED" ? rejectionReason : undefined,
+        }),
       })
 
       if (!response.ok) {
@@ -185,13 +206,13 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
 
   const handlePaymentRequestInitiate = (application: Application) => {
     setPaymentApplication(application)
-    setSemester("")
+    setSemesterId("")
     setAmount("")
     setPaymentOpen(true)
   }
 
   const handleSendPaymentRequest = async () => {
-    if (!paymentApplication || !semester || !amount) {
+    if (!paymentApplication || !semesterId || !amount) {
       toast.error("Please fill in all fields")
       return
     }
@@ -203,7 +224,7 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ semester, amount: parseFloat(amount) }),
+        body: JSON.stringify({ semesterId, amount: parseFloat(amount) }),
       })
 
       if (!response.ok) {
@@ -219,6 +240,12 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
     } finally {
       setIsSendingPayment(false)
     }
+  }
+
+  const formatSemesterRange = (startDate: string, endDate: string) => {
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    return `${formatDateShort(start)} - ${formatDateShort(end)}`
   }
 
   const handleQuickView = (application: Application) => {
@@ -353,7 +380,7 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
                 onClick={() => handleStatusChangeInitiate(application, "REJECTED")}
               >
                 <IconX className="mr-1 h-3 w-3" />
-                Reject
+                Reject Pass & Application
               </Button>
               <Popover>
                 <PopoverTrigger asChild>
@@ -369,9 +396,9 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
                           <IconEye className="mr-2 h-4 w-4" />
                           Quick View
                         </CommandItem>
-                        <CommandItem onSelect={() => handleStatusChangeInitiate(application, "WAITLIST")}>
+                        <CommandItem onSelect={() => handleStatusChangeInitiate(application, "WAITLIST")} disabled>
                           <IconClock className="mr-2 h-4 w-4" />
-                          Set to Waitlist
+                          Set to Wishlist
                         </CommandItem>
                       </CommandGroup>
                     </CommandList>
@@ -389,10 +416,10 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
                 size="sm"
                 variant="outline"
                 className="h-7 px-2 text-xs"
-                onClick={() => handlePaymentRequestInitiate(application)}
+                onClick={() => handleQuickView(application)}
               >
-                <IconCreditCard className="mr-1 h-3 w-3" />
-                Payment
+                <IconEye className="mr-1 h-3 w-3" />
+                Quick View
               </Button>
               <Popover>
                 <PopoverTrigger asChild>
@@ -400,21 +427,21 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
                     <IconSelector className="h-3 w-3" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[180px] p-0" align="end">
+                <PopoverContent className="w-[220px] p-0" align="end">
                   <Command>
                     <CommandList>
                       <CommandGroup>
-                        <CommandItem onSelect={() => handleQuickView(application)}>
-                          <IconEye className="mr-2 h-4 w-4" />
-                          Quick View
+                        <CommandItem onSelect={() => handlePaymentRequestInitiate(application)}>
+                          <IconCreditCard className="mr-2 h-4 w-4" />
+                          Send Payment Request
                         </CommandItem>
                         <CommandItem onSelect={() => handleStatusChangeInitiate(application, "REJECTED")}>
                           <IconX className="mr-2 h-4 w-4" />
-                          Reject
+                          Reject Pass & Application
                         </CommandItem>
                         <CommandItem onSelect={() => handleStatusChangeInitiate(application, "WAITLIST")}>
                           <IconClock className="mr-2 h-4 w-4" />
-                          Set to Waitlist
+                          Set to Wishlist
                         </CommandItem>
                       </CommandGroup>
                     </CommandList>
@@ -443,13 +470,17 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
                   <IconSelector className="h-3 w-3" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[180px] p-0" align="end">
+              <PopoverContent className="w-[220px] p-0" align="end">
                 <Command>
                   <CommandList>
                     <CommandGroup>
+                      <CommandItem onSelect={() => handlePaymentRequestInitiate(application)} disabled>
+                        <IconCreditCard className="mr-2 h-4 w-4" />
+                        Send Payment Request
+                      </CommandItem>
                       <CommandItem onSelect={() => handleStatusChangeInitiate(application, "WAITLIST")}>
                         <IconClock className="mr-2 h-4 w-4" />
-                        Set to Waitlist
+                        Set to Wishlist
                       </CommandItem>
                       <CommandItem onSelect={() => handleStatusChangeInitiate(application, "APPROVED")}>
                         <IconCheck className="mr-2 h-4 w-4" />
@@ -700,6 +731,18 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
                    </Badge>
                 </div>
               </div>
+              {targetStatus === "REJECTED" && (
+                <div className="mt-4 space-y-2">
+                  <Label htmlFor="rejection-reason">Rejection Reason (optional)</Label>
+                  <Textarea
+                    id="rejection-reason"
+                    placeholder="Add a short reason for the applicant..."
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -737,17 +780,22 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
 
               <div className="space-y-2">
                 <Label htmlFor="semester">Semester</Label>
-                <Select value={semester} onValueChange={setSemester}>
-                  <SelectTrigger id="semester">
+                <Select value={semesterId} onValueChange={setSemesterId}>
+                  <SelectTrigger id="semester" className="w-full">
                     <SelectValue placeholder="Select semester" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Spring 2024">Spring 2024</SelectItem>
-                    <SelectItem value="Summer 2024">Summer 2024</SelectItem>
-                    <SelectItem value="Fall 2024">Fall 2024</SelectItem>
-                    <SelectItem value="Spring 2025">Spring 2025</SelectItem>
-                    <SelectItem value="Summer 2025">Summer 2025</SelectItem>
-                    <SelectItem value="Fall 2025">Fall 2025</SelectItem>
+                    {hasSemesters ? (
+                      semesters.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.name} ({formatSemesterRange(option.startDate, option.endDate)})
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-semesters" disabled>
+                        No semesters yet. Add one in Settings.
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -883,7 +931,7 @@ export function ApplicationsTable({ data }: { data: Application[] }) {
                       }}
                     >
                       <IconX className="mr-2 h-4 w-4" />
-                      Reject
+                      Reject Pass & Application
                     </Button>
                   </div>
                 )}

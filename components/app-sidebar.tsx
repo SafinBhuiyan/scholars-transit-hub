@@ -143,24 +143,6 @@ const roleBasedNavigation = {
   },
 }
 
-const navSecondary = [
-  {
-    title: "Settings",
-    url: "#",
-    icon: IconSettings,
-  },
-  {
-    title: "Get Help",
-    url: "#",
-    icon: IconHelp,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: IconSearch,
-  },
-]
-
 export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user: any }) {
   const role = (user?.role || "USER") as keyof typeof roleBasedNavigation
   const navigation = roleBasedNavigation[role]
@@ -170,6 +152,24 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
     : role === "SUPERVISOR" 
     ? "/supervisor/dashboard" 
     : "/dashboard"
+
+  const navSecondary = [
+    {
+      title: "Settings",
+      url: role === "ADMIN" ? "/admin/dashboard/settings" : "#",
+      icon: IconSettings,
+    },
+    {
+      title: "Get Help",
+      url: "#",
+      icon: IconHelp,
+    },
+    {
+      title: "Search",
+      url: "#",
+      icon: IconSearch,
+    },
+  ]
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>

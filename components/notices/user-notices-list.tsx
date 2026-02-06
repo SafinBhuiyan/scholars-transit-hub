@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { NoticeViewDialog } from "./notice-view-dialog"
-import { cn } from "@/lib/utils"
+import { cn, formatDateShort } from "@/lib/utils"
 
 export function UserNoticesList({ data }: { data: any[] }) {
   const [currentPage, setCurrentPage] = React.useState(1)
@@ -89,7 +89,7 @@ export function UserNoticesList({ data }: { data: any[] }) {
                     <IconUsers className="h-2.5 w-2.5" /> {notice.target}
                   </Badge>
                   <Badge variant="outline" className="h-5 text-[9px] gap-1 px-1.5 border-border/50 font-normal">
-                    <IconCalendar className="h-2.5 w-2.5 opacity-60" /> {new Date(notice.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    <IconCalendar className="h-2.5 w-2.5 opacity-60" /> {formatDateShort(notice.createdAt)}
                   </Badge>
                 </div>
               </div>

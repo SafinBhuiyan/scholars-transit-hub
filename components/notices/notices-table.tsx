@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import {
@@ -34,7 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
+import { cn, formatDateShort } from "@/lib/utils"
 
 export function NoticesTable({ data }: { data: any[] }) {
   const [activeTab, setActiveTab] = React.useState("all")
@@ -191,7 +191,7 @@ export function NoticesTable({ data }: { data: any[] }) {
                                     <IconUsers className="h-2.5 w-2.5" /> {notice.target}
                                 </Badge>
                                 <Badge variant="outline" className="h-5 text-[9px] gap-1 px-1.5 border-border/50 font-normal">
-                                    <IconCalendar className="h-2.5 w-2.5 opacity-60" /> {new Date(notice.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    <IconCalendar className="h-2.5 w-2.5 opacity-60" /> {formatDateShort(notice.createdAt)}
                                 </Badge>
                             </div>
                         </div>
@@ -330,3 +330,4 @@ export function NoticesTable({ data }: { data: any[] }) {
     </div>
   )
 }
+

@@ -60,6 +60,8 @@ export async function createCheckout(data: CheckoutRequest): Promise<CheckoutRes
             full_name: data.fullName,
             email: data.email,
             amount: data.amount,
+            invoice_number: data.invoiceNumber,
+            invoiceNumber: data.invoiceNumber,
             metadata: data.metadata,
             redirect_url: data.redirectUrl,
             return_type: "GET",

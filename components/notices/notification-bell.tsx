@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import { 
@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
+import { cn, formatDateShort } from "@/lib/utils"
 import Link from "next/link"
 import { authClient } from "@/lib/auth-client"
 
@@ -134,7 +134,7 @@ export function NotificationBell() {
                   {notice.content}
                 </p>
                 <span className="text-[10px] text-muted-foreground mt-1">
-                    {new Date(notice.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(notice.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                    {formatDateShort(notice.createdAt)} • {new Date(notice.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                 </span>
               </div>
             ))
@@ -152,3 +152,4 @@ export function NotificationBell() {
     </DropdownMenu>
   )
 }
+

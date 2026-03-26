@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/react";
 
 const outfit = Outfit({subsets:['latin'],variable:'--font-sans'});
 
@@ -57,6 +58,7 @@ export default function RootLayout({
           <SplashScreen />
           {children}
           <Toaster richColors expand={false} />
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>

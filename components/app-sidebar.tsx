@@ -10,7 +10,6 @@ import {
   IconPlus,
   IconReport,
   IconRoute,
-  IconSearch,
   IconSettings,
   IconTicket,
   IconCreditCard,
@@ -144,11 +143,6 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       title: "Get Help",
       url: "#",
       icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
     },
   ]
 

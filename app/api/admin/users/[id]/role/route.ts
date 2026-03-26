@@ -8,7 +8,7 @@ import { resend, renderEmailTemplate } from "@/lib/email"
 
 
 const roleSchema = z.object({
-    role: z.enum(["USER", "ADMIN", "SUPERVISOR"]),
+    role: z.enum(["USER", "ADMIN", "BANNED"]),
 })
 
 export async function PATCH(

@@ -1,39 +1,12 @@
 "use client"
 
 import * as React from "react"
-import {
-  IconCheck,
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
-  IconLoader,
-  IconSearch,
-  IconSelector,
-} from "@tabler/icons-react"
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-} from "@tanstack/react-table"
+import { IconClock, IconFilter, IconLoader, IconSearch } from "@tabler/icons-react"
 import { z } from "zod"
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
 import {
   Dialog,
   DialogContent,
@@ -43,60 +16,135 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
+import { toast } from "sonner"
 
 export const userSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string().email(),
   image: z.string().nullable().optional(),
-  role: z.enum(["ADMIN", "SUPERVISOR", "USER"]),
+  role: z.enum(["ADMIN", "USER", "BANNED"]),
   joinDate: z.string(),
 })
 
 export type User = z.infer<typeof userSchema>
 
-export function UsersTable({ data }: { data: User[] }) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
+type UsersResponse = {
+  users: User[]
+  hasMore: boolean
+  nextOffset: number
+}
 
-  // Confirmation Dialog State
+export function UsersTable() {
+  const [users, setUsers] = React.useState<User[]>([])
+  const [query, setQuery] = React.useState("")
+  const [roleFilter, setRoleFilter] = React.useState<"ALL" | User["role"]>("ALL")
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [hasMore, setHasMore] = React.useState(true)
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const [targetUser, setTargetUser] = React.useState<User | null>(null)
   const [targetRole, setTargetRole] = React.useState<User["role"] | null>(null)
   const [isUpdating, setIsUpdating] = React.useState(false)
   const searchRef = React.useRef<HTMLInputElement>(null)
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null)
+  const usersRef = React.useRef<User[]>([])
+  const loadingRef = React.useRef(false)
+  const hasMoreRef = React.useRef(true)
+  const requestIdRef = React.useRef(0)
 
-  const router = useRouter()
+  React.useEffect(() => {
+    usersRef.current = users
+  }, [users])
+
+  React.useEffect(() => {
+    loadingRef.current = isLoading
+  }, [isLoading])
+
+  React.useEffect(() => {
+    hasMoreRef.current = hasMore
+  }, [hasMore])
+
+  const loadUsers = React.useCallback(
+    async ({ reset = false }: { reset?: boolean } = {}) => {
+      if (!reset && (loadingRef.current || !hasMoreRef.current)) return
+
+      const requestId = ++requestIdRef.current
+      const offset = reset ? 0 : usersRef.current.length
+      const params = new URLSearchParams({
+        offset: String(offset),
+        limit: "20",
+      })
+
+      const trimmedQuery = query.trim()
+      if (trimmedQuery) params.set("q", trimmedQuery)
+      if (roleFilter !== "ALL") params.set("role", roleFilter)
+
+      if (reset) {
+        setUsers([])
+        setHasMore(true)
+      }
+
+      setIsLoading(true)
+      loadingRef.current = true
+
+      try {
+        const response = await fetch(`/api/admin/users?${params.toString()}`)
+        if (!response.ok) {
+          throw new Error("Failed to load users")
+        }
+
+        const data = (await response.json()) as UsersResponse
+        if (requestId !== requestIdRef.current) return
+
+        setUsers((prev) => (reset ? data.users : [...prev, ...data.users]))
+        setHasMore(data.hasMore)
+      } catch (error) {
+        if (requestId === requestIdRef.current) {
+          toast.error("Couldn't load more users right now.")
+        }
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setIsLoading(false)
+          loadingRef.current = false
+        }
+      }
+    },
+    [query, roleFilter]
+  )
+
+  React.useEffect(() => {
+    void loadUsers({ reset: true })
+  }, [loadUsers])
+
+  React.useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        searchRef.current?.focus()
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [])
+
+  React.useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || !hasMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !loadingRef.current) {
+          void loadUsers()
+        }
+      },
+      { rootMargin: "300px" }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, loadUsers])
 
   const handleRoleChangeInitiate = (user: User, newRole: User["role"]) => {
     if (user.role === newRole) return
@@ -112,9 +160,7 @@ export function UsersTable({ data }: { data: User[] }) {
     try {
       const response = await fetch(`/api/admin/users/${targetUser.id}/role`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: targetRole }),
       })
 
@@ -124,7 +170,7 @@ export function UsersTable({ data }: { data: User[] }) {
 
       toast.success("User role updated successfully")
       setConfirmOpen(false)
-      router.refresh()
+      await loadUsers({ reset: true })
     } catch (error) {
       toast.error("Something went wrong. Please try again.")
     } finally {
@@ -132,273 +178,163 @@ export function UsersTable({ data }: { data: User[] }) {
     }
   }
 
-  const columns: ColumnDef<User>[] = [
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => {
-        const user = row.original
-        return (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={user.image || undefined} alt={user.name} />
-              <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <span className="font-medium">{user.name}</span>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "email",
-      header: () => <div className="text-center">Email</div>,
-      cell: ({ row }) => (
-        <div className="text-center text-muted-foreground">{row.original.email}</div>
-      ),
-    },
-    {
-      accessorKey: "role",
-      header: () => <div className="text-center">Role</div>,
-      cell: ({ row }) => {
-        const role = row.original.role
-        return (
-          <div className="flex justify-center">
-            <Badge
-              variant="outline"
-              className={`
-                ${role === "ADMIN" ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/25" : ""}
-                ${role === "SUPERVISOR" ? "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/25" : ""}
-                ${role === "USER" ? "bg-gray-500/15 text-gray-700 dark:text-gray-400 border-gray-500/25" : ""}
-              `}
-            >
-              {role}
-            </Badge>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "joinDate",
-      header: () => <div className="text-center">Joined</div>,
-      cell: ({ row }) => (
-        <div className="text-center text-muted-foreground">{row.original.joinDate}</div>
-      ),
-    },
-    {
-      id: "actions",
-      header: () => <div className="text-center">Actions</div>,
-      cell: ({ row }) => {
-        const user = row.original
-        return (
-          <div className="flex justify-center">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="w-[140px] justify-between">
-                  {user.role}
-                  <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[140px] p-0" align="end">
-                <Command>
-                  <CommandList>
-                    <CommandGroup>
-                      {["USER", "ADMIN", "SUPERVISOR"].map((role) => (
-                        <CommandItem
-                          key={role}
-                          value={role}
-                          onSelect={() => handleRoleChangeInitiate(user, role as User["role"])}
-                        >
-                          <IconCheck
-                            className={`mr-2 h-4 w-4 ${
-                              user.role === role ? "opacity-100" : "opacity-0"
-                            }`}
-                          />
-                          {role}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
-        )
-      },
-    },
-  ]
-
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onPaginationChange: setPagination,
-    state: {
-      sorting,
-      columnFilters,
-      pagination,
-    },
-  })
-
-  React.useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        searchRef.current?.focus()
-      }
-
-      if (e.key === "[" && (e.metaKey || e.ctrlKey)) {
-        if (table.getCanPreviousPage()) {
-          e.preventDefault()
-          table.previousPage()
-        }
-      }
-
-      if (e.key === "]" && (e.metaKey || e.ctrlKey)) {
-        if (table.getCanNextPage()) {
-          e.preventDefault()
-          table.nextPage()
-        }
+  const getRoleTone = (role: User["role"]) => {
+    if (role === "ADMIN") {
+      return {
+        card: "border-blue-500/20 bg-gradient-to-b from-blue-500/[0.06] to-card",
+        badge: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/25",
       }
     }
 
-    document.addEventListener("keydown", down)
-    return () => document.removeEventListener("keydown", down)
-  }, [table])
+    if (role === "BANNED") {
+      return {
+        card: "border-red-500/20 bg-gradient-to-b from-red-500/[0.06] to-card",
+        badge: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/25",
+      }
+    }
+
+    return {
+      card: "border-border bg-card",
+      badge: "bg-gray-500/15 text-gray-700 dark:text-gray-400 border-gray-500/25",
+    }
+  }
+
+  const getRoleActions = (role: User["role"]) => {
+    if (role === "ADMIN") {
+      return [
+        { label: "Make User", role: "USER" as const, variant: "outline" as const },
+        { label: "Ban User", role: "BANNED" as const, variant: "destructive" as const },
+      ]
+    }
+
+    if (role === "BANNED") {
+      return [{ label: "Remove Ban", role: "USER" as const, variant: "default" as const }]
+    }
+
+    return [
+      { label: "Make Admin", role: "ADMIN" as const, variant: "outline" as const },
+      { label: "Ban User", role: "BANNED" as const, variant: "destructive" as const },
+    ]
+  }
+
+  const roleButtons: Array<{ label: string; value: "ALL" | User["role"] }> = [
+    { label: "All", value: "ALL" },
+    { label: "Users", value: "USER" },
+    { label: "Admins", value: "ADMIN" },
+    { label: "Banned", value: "BANNED" },
+  ]
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Page Header */}
-      <div>
+      <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Users</h1>
         <p className="text-muted-foreground">Manage user roles and system access</p>
       </div>
 
-      {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="flex flex-1 items-center gap-2 w-full sm:w-auto">
-          <div className="relative w-full max-w-sm">
-            <IconSearch className="text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+        <div className="flex w-full flex-col gap-2 lg:flex-1 lg:flex-row lg:items-center lg:gap-3">
+          <div className="relative w-full max-w-xl lg:max-w-2xl">
+            <IconSearch className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
             <Input
               ref={searchRef}
-              placeholder="Search by name..."
-              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-              onChange={(event) =>
-                table.getColumn("name")?.setFilterValue(event.target.value)
-              }
-              className="pl-9 pr-12"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search by name or email..."
+              className="pl-9 pr-20"
             />
-            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:block">
+            <div className="absolute right-2.5 top-1/2 hidden -translate-y-1/2 sm:block">
               <KbdGroup>
                 <Kbd>⌘</Kbd>
                 <Kbd>K</Kbd>
               </KbdGroup>
             </div>
           </div>
-          <Select
-            value={(table.getColumn("role")?.getFilterValue() as string) ?? "ALL"}
-            onValueChange={(value) => table.getColumn("role")?.setFilterValue(value === "ALL" ? "" : value)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by Role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Roles</SelectItem>
-              <SelectItem value="USER">USER</SelectItem>
-              <SelectItem value="ADMIN">ADMIN</SelectItem>
-              <SelectItem value="SUPERVISOR">SUPERVISOR</SelectItem>
-            </SelectContent>
-          </Select>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end sm:shrink-0">
+          {roleButtons.map((button) => (
+            <Button
+              key={button.value}
+              variant={roleFilter === button.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setRoleFilter(button.value)}
+              className={button.value === "ALL" ? "gap-2" : ""}
+            >
+              {button.value === "ALL" ? <IconFilter className="h-4 w-4" /> : null}
+              {button.label}
+            </Button>
+          ))}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No users found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4 xl:grid-cols-6">
+        {users.map((user) => {
+          const roleTone = getRoleTone(user.role)
+
+          return (
+            <div
+              key={user.id}
+              className={`group relative rounded-2xl border p-2 shadow-sm transition-all group-hover:bg-muted/10 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 md:p-5 ${roleTone.card}`}
+            >
+              <div className="flex flex-col items-center text-center">
+                <Avatar className="h-12 w-12 ring-2 ring-background md:h-14 md:w-14">
+                  <AvatarImage src={user.image || undefined} alt={user.name} />
+                  <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <p className="mt-3 line-clamp-1 text-sm font-semibold md:text-base">{user.name}</p>
+                <p className="mt-1 text-center text-xs font-medium text-foreground/80 underline decoration-foreground/35 decoration-dotted underline-offset-4 md:text-sm">
+                  {user.email}
+                </p>
+              </div>
+
+              <div className="mt-4 grid gap-2 text-xs md:gap-3 md:text-sm">
+                <div className="flex items-center justify-between rounded-xl border bg-background/60 px-2.5 py-2 md:px-3">
+                  <span className="text-muted-foreground">Joined</span>
+                  <span className="font-medium">{user.joinDate}</span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-xl border bg-background/60 px-2.5 py-2 md:px-3">
+                  <span className="text-muted-foreground">Role</span>
+                  <Badge variant="outline" className={roleTone.badge}>{user.role}</Badge>
+                </div>
+
+              </div>
+
+              <div className="mt-3 grid gap-2 md:mt-4 md:grid-cols-2">
+                {getRoleActions(user.role).map((action) => (
+                  <Button
+                    key={action.label}
+                    variant={action.variant}
+                    size="sm"
+                    className={`w-full rounded-xl ${action.label === "Remove Ban" ? "md:col-span-2" : ""}`}
+                    onClick={() => handleRoleChangeInitiate(user, action.role)}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )
+        })}
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-end space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-          className="gap-2"
-        >
-          <KbdGroup className="hidden sm:flex">
-            <Kbd>⌘</Kbd>
-            <Kbd>[</Kbd>
-          </KbdGroup>
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-          className="gap-2"
-        >
-          Next
-          <KbdGroup className="hidden sm:flex">
-            <Kbd>⌘</Kbd>
-            <Kbd>]</Kbd>
-          </KbdGroup>
-        </Button>
+      <div ref={sentinelRef} className="flex flex-col items-center gap-3 py-4">
+        {isLoading && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <IconLoader className="h-4 w-4 animate-spin" />
+            Loading users...
+          </div>
+        )}
+        {!isLoading && users.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            Showing {users.length} users{hasMore ? " and loading more as you scroll" : " with no more results"}
+          </p>
+        )}
+        {!isLoading && users.length === 0 && (
+          <p className="text-sm text-muted-foreground">No users found.</p>
+        )}
       </div>
 
-      {/* Confirmation Dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
@@ -407,29 +343,29 @@ export function UsersTable({ data }: { data: User[] }) {
               You are changing this user&apos;s system role. This will immediately affect their access permissions.
             </DialogDescription>
           </DialogHeader>
-          
+
           {targetUser && targetRole && (
             <div className="py-4">
-              <div className="flex flex-col gap-2 p-4 border rounded-md bg-muted/50">
+              <div className="flex flex-col gap-2 rounded-md border bg-muted/50 p-4">
                 <span className="text-sm font-medium">User: {targetUser.email}</span>
                 <div className="flex items-center gap-2 text-sm">
-                   <Badge variant="outline">{targetUser.role}</Badge>
-                   <span>→</span>
-                   <Badge 
-                     className={`
-                       ${targetRole === "ADMIN" ? "bg-blue-500 text-white hover:bg-blue-600" : ""}
-                       ${targetRole === "SUPERVISOR" ? "bg-purple-500 text-white hover:bg-purple-600" : ""}
-                       ${targetRole === "USER" ? "bg-gray-500 text-white hover:bg-gray-600" : ""}
-                     `}
-                   >
-                     {targetRole}
-                   </Badge>
+                  <Badge variant="outline">{targetUser.role}</Badge>
+                  <span>→</span>
+                  <Badge
+                    className={`
+                      ${targetRole === "ADMIN" ? "bg-blue-500 text-white hover:bg-blue-600" : ""}
+                      ${targetRole === "BANNED" ? "bg-red-500 text-white hover:bg-red-600" : ""}
+                      ${targetRole === "USER" ? "bg-gray-500 text-white hover:bg-gray-600" : ""}
+                    `}
+                  >
+                    {targetRole}
+                  </Badge>
                 </div>
               </div>
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-3 sm:flex-row">
             <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={isUpdating} className="gap-2">
               Cancel
               <Kbd>Esc</Kbd>

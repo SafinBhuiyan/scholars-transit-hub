@@ -16,10 +16,11 @@ export default async function DashboardLayout({
   const session = await auth.api.getSession({ headers: await headers() })
 
   if (!session || session.user.role !== "USER") {
+    if (session?.user.role === "BANNED") {
+      redirect("/banned")
+    }
     if (session?.user.role === "ADMIN") {
       redirect("/admin/dashboard")
-    } else if (session?.user.role === "SUPERVISOR") {
-      redirect("/supervisor/dashboard")
     } else {
       redirect("/login")
     }

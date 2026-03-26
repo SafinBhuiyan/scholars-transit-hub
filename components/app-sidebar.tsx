@@ -15,6 +15,7 @@ import {
   IconTicket,
   IconCreditCard,
   IconSpeakerphone,
+  IconFiles,
   IconUsers,
 } from "@tabler/icons-react"
 
@@ -47,67 +48,48 @@ const roleBasedNavigation = {
         icon: IconFileDescription,
       },
       {
-        title: "Users",
-        url: "/admin/dashboard/users",
-        icon: IconUsers,
-      },
-      {
-        title: "Routes & Pickup Points",
-        url: "/admin/dashboard/routes",
-        icon: IconRoute,
-      },
-      {
         title: "Payments",
         url: "/admin/dashboard/payments",
         icon: IconCreditCard,
       },
       {
-        title: "Active Passes",
+        title: "Scan Pass",
         url: "/admin/dashboard/passes",
-        icon: IconTicket,
-      },
-      {
-        title: "Notices",
-        url: "/admin/dashboard/notices",
-        icon: IconSpeakerphone,
-      },
-      {
-        title: "Reports",
-        url: "/admin/dashboard/reports",
-        icon: IconReport,
-      },
-    ],
-    documents: [
-      {
-        name: "Data Library",
-        url: "#",
-        icon: IconDatabase,
-      },
-    ],
-  },
-  SUPERVISOR: {
-    navMain: [
-      {
-        title: "Dashboard",
-        url: "/supervisor/dashboard",
-        icon: IconDashboard,
-      },
-      {
-        title: "Scan",
-        url: "#",
         icon: IconCamera,
       },
+    ],
+    transportManagement: [
       {
-        title: "Reports",
-        url: "#",
+        name: "Routes & Pickup Points",
+        url: "/admin/dashboard/routes",
+        icon: IconRoute,
+      },
+      {
+        name: "Complaint / Feedback",
+        url: "/admin/dashboard/complaint-feedback",
         icon: IconReport,
       },
     ],
     documents: [
       {
-        name: "Instructions",
-        url: "#",
-        icon: IconFileDescription,
+        name: "Files & Docs",
+        url: "/admin/dashboard/files-docs",
+        icon: IconFiles,
+      },
+      {
+        name: "ID Cards",
+        url: "/admin/dashboard/id-cards",
+        icon: IconDatabase,
+      },
+      {
+        name: "Users",
+        url: "/admin/dashboard/users",
+        icon: IconUsers,
+      },
+      {
+        name: "Notices",
+        url: "/admin/dashboard/notices",
+        icon: IconSpeakerphone,
       },
     ],
   },
@@ -139,19 +121,18 @@ const roleBasedNavigation = {
         icon: IconSpeakerphone,
       },
     ],
+    transportManagement: [],
     documents: [],
   },
 }
 
-export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user: any }) {
-  const role = (user?.role || "USER") as keyof typeof roleBasedNavigation
+type SidebarUser = React.ComponentProps<typeof NavUser>["user"]
+
+export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user: SidebarUser }) {
+  const role = user?.role === "ADMIN" ? "ADMIN" : "USER"
   const navigation = roleBasedNavigation[role]
   
-  const dashboardUrl = role === "ADMIN" 
-    ? "/admin/dashboard" 
-    : role === "SUPERVISOR" 
-    ? "/supervisor/dashboard" 
-    : "/dashboard"
+  const dashboardUrl = role === "ADMIN" ? "/admin/dashboard" : "/dashboard"
 
   const navSecondary = [
     {
@@ -190,8 +171,9 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navigation.navMain} />
-        {role !== "USER" && (
+        {role === "ADMIN" && (
           <>
+            <NavDocuments items={navigation.transportManagement} label="Transport" />
             <NavDocuments items={navigation.documents} />
             <NavSecondary items={navSecondary} className="mt-auto" />
           </>

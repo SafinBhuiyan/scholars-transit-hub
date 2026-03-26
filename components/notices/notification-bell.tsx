@@ -31,7 +31,6 @@ export function NotificationBell() {
 
   const noticesPath = React.useMemo(() => {
     if (session?.user?.role === "ADMIN") return "/admin/dashboard/notices"
-    if (session?.user?.role === "SUPERVISOR") return "/supervisor/dashboard/notices"
     return "/dashboard/notices"
   }, [session?.user?.role])
 
@@ -152,4 +151,3 @@ export function NotificationBell() {
     </DropdownMenu>
   )
 }
-

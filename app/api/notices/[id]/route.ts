@@ -9,7 +9,7 @@ const noticeSchema = z.object({
     content: z.string().min(1).optional(),
     type: z.enum(["INFO", "WARNING", "SUCCESS", "DANGER"]).optional(),
     target: z.enum(["ALL", "ROLE", "SPECIFIC"]).optional(),
-    targetRoles: z.array(z.enum(["ADMIN", "SUPERVISOR", "USER"])).optional(),
+    targetRoles: z.array(z.enum(["ADMIN", "USER"])).optional(),
     targetUsers: z.array(z.string()).optional(),
     isPublished: z.boolean().optional(),
     isPinned: z.boolean().optional(),

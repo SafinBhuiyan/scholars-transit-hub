@@ -16,6 +16,9 @@ export default async function AdminLayout({
   const session = await auth.api.getSession({ headers: await headers() })
 
   if (!session || session.user.role !== "ADMIN") {
+    if (session?.user.role === "BANNED") {
+      redirect("/banned")
+    }
     redirect("/dashboard")
   }
 

@@ -9,7 +9,7 @@ datasource db {
 enum Role {
   USER
   ADMIN
-  SUPERVISOR
+  BANNED
 }
 
 model User {
@@ -26,9 +26,40 @@ model User {
   noticesCreated        Notice[]               @relation("NoticeCreator")
   noticesRead           UserNotice[]
   transportApplications TransportApplication[]
+  filesDocsUploaded     FilesDoc[]
 
   @@unique([email])
   @@map("user")
+}
+
+model FilesDoc {
+  id           String   @id @default(cuid())
+  fileName     String
+  originalName String
+  publicId     String   @unique
+  url          String
+  format       String
+  mimeType     String
+  bytes        Int
+  category     String   @default("General")
+  uploadedById String?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([category])
+  @@index([createdAt])
+  @@index([uploadedById])
+  @@map("files_doc")
+}
+
+model FilesDocCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("files_doc_category")
 }
 
 enum NoticeType {

@@ -19,9 +19,16 @@ let prisma = globalForPrisma.prisma || new PrismaClient({
 })
 
 // Dynamic check for newly added models during development
-if (process.env.NODE_ENV !== 'production' && !(prisma as any).notice) {
-  console.log("Notice model missing from current Prisma instance. Re-instantiating client...")
-  prisma = new PrismaClient({ adapter })
+if (process.env.NODE_ENV !== 'production') {
+  const requiredModels = ["notice", "filesDoc", "filesDocCategory"] as const
+  const missingModels = requiredModels.filter((model) => !(prisma as any)[model])
+
+  if (missingModels.length > 0) {
+    console.log(
+      `Prisma models missing from current instance (${missingModels.join(", ")}). Re-instantiating client...`
+    )
+    prisma = new PrismaClient({ adapter })
+  }
 }
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma

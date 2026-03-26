@@ -237,7 +237,7 @@ export function NoticeDialog({ open, onOpenChange, onSuccess, notice }: NoticeDi
 
             {target === "ROLE" && (
               <div className="flex flex-wrap gap-4 px-1 pt-1">
-                {["ADMIN", "SUPERVISOR", "USER"].map((role) => (
+                {["ADMIN", "USER"].map((role) => (
                   <div key={role} className="flex items-center space-x-2">
                     <Checkbox 
                       id={`role-${role}`} 

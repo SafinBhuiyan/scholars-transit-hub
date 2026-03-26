@@ -1,6 +1,17 @@
 "use client"
 
 import * as React from "react"
+import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,7 +34,13 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { toast } from "sonner"
-import { IconCalendar, IconEdit, IconTrash } from "@tabler/icons-react"
+import { IconCalendar, IconDotsVertical, IconEdit, IconTrash } from "@tabler/icons-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
@@ -56,6 +73,7 @@ export function SemesterSettings() {
   const [editName, setEditName] = React.useState("")
   const [editStartDate, setEditStartDate] = React.useState<Date | undefined>()
   const [editEndDate, setEditEndDate] = React.useState<Date | undefined>()
+  const [deleteTarget, setDeleteTarget] = React.useState<Semester | null>(null)
 
   const loadSemesters = React.useCallback(async () => {
     setIsLoading(true)
@@ -66,7 +84,7 @@ export function SemesterSettings() {
       }
       const data = await response.json()
       setSemesters(data)
-    } catch (error) {
+    } catch {
       toast.error("Failed to load semesters")
     } finally {
       setIsLoading(false)
@@ -104,7 +122,7 @@ export function SemesterSettings() {
       setStartDate(undefined)
       setEndDate(undefined)
       await loadSemesters()
-    } catch (error) {
+    } catch {
       toast.error("Failed to create semester")
     } finally {
       setIsSaving(false)
@@ -147,20 +165,19 @@ export function SemesterSettings() {
       setEditStartDate(undefined)
       setEditEndDate(undefined)
       await loadSemesters()
-    } catch (error) {
+    } catch {
       toast.error("Failed to update semester")
     } finally {
       setIsSaving(false)
     }
   }
 
-  const handleDelete = async (semester: Semester) => {
-    const confirmed = window.confirm(`Delete ${semester.name}? This cannot be undone.`)
-    if (!confirmed) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
 
     setIsSaving(true)
     try {
-      const response = await fetch(`/api/admin/semesters/${semester.id}`, {
+      const response = await fetch(`/api/admin/semesters/${deleteTarget.id}`, {
         method: "DELETE",
       })
 
@@ -169,8 +186,9 @@ export function SemesterSettings() {
       }
 
       toast.success("Semester deleted")
+      setDeleteTarget(null)
       await loadSemesters()
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete semester")
     } finally {
       setIsSaving(false)
@@ -178,16 +196,16 @@ export function SemesterSettings() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage semesters for payment requests</p>
-      </div>
-
+    <div className="flex w-full min-w-0 max-w-full flex-col gap-6">
       <div className="rounded-md border p-4 space-y-4">
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold tracking-tight">Semesters</h2>
+          <p className="text-sm text-muted-foreground">Manage semesters for subscription & payment requests</p>
+        </div>
+        <div className="h-px w-full bg-border/70" />
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="semester-name">Semester Name</Label>
+            <Label htmlFor="semester-name">Semester Name *</Label>
             <Input
               id="semester-name"
               placeholder="Spring 2026"
@@ -196,7 +214,7 @@ export function SemesterSettings() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="semester-start">Start Date</Label>
+            <Label htmlFor="semester-start">Start Date *</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -217,7 +235,7 @@ export function SemesterSettings() {
             </Popover>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="semester-end">End Date</Label>
+            <Label htmlFor="semester-end">End Date *</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -239,63 +257,78 @@ export function SemesterSettings() {
           </div>
         </div>
         <div className="flex justify-end">
-          <Button onClick={handleCreate} disabled={isSaving} className="w-full md:w-auto">
-            Add Semester
+          <Button onClick={handleCreate} disabled={isSaving} className="w-full">
+            Add New Semesters
           </Button>
         </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-x-auto">
+        <Table className="w-full table-auto">
           <TableHeader>
             <TableRow>
               <TableHead>Semester</TableHead>
-              <TableHead>Start Date</TableHead>
-              <TableHead>End Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="whitespace-nowrap">Date Range</TableHead>
+              <TableHead className="w-16 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
                   Loading semesters...
                 </TableCell>
               </TableRow>
             ) : semesters.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
                   No semesters yet.
                 </TableCell>
               </TableRow>
             ) : (
               semesters.map((semester) => (
                 <TableRow key={semester.id}>
-                  <TableCell className="font-medium">{semester.name}</TableCell>
-                  <TableCell>{formatDate(semester.startDate)}</TableCell>
-                  <TableCell>{formatDate(semester.endDate)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditOpen(semester)}
-                        className="gap-2"
-                      >
-                        <IconEdit className="h-4 w-4" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(semester)}
-                        className="gap-2"
-                        disabled={isSaving}
-                      >
-                        <IconTrash className="h-4 w-4" />
-                        Delete
-                      </Button>
+                  <TableCell className="text-xs">
+                    <span className="inline-flex max-w-full items-center rounded-full border border-white/80 bg-white px-3 py-1 text-xs font-medium text-slate-900 shadow-sm">
+                      {semester.name}
+                    </span>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <div className="flex flex-nowrap items-center gap-1 text-sm">
+                      <Badge variant="outline" className="h-auto rounded-md px-2 py-0.5 text-[11px] font-medium">
+                        {formatDate(semester.startDate)}
+                      </Badge>
+                      <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                        -
+                      </span>
+                      <Badge variant="outline" className="h-auto rounded-md px-2 py-0.5 text-[11px] font-medium">
+                        {formatDate(semester.endDate)}
+                      </Badge>
                     </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="ml-auto h-8 w-8">
+                          <IconDotsVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-36">
+                        <DropdownMenuItem onClick={() => handleEditOpen(semester)} className="gap-2">
+                          <IconEdit className="h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setDeleteTarget(semester)}
+                          className="gap-2"
+                          disabled={isSaving}
+                        >
+                          <IconTrash className="h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -312,7 +345,7 @@ export function SemesterSettings() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="edit-semester-name">Semester Name</Label>
+              <Label htmlFor="edit-semester-name">Semester Name *</Label>
               <Input
                 id="edit-semester-name"
                 value={editName}
@@ -320,7 +353,7 @@ export function SemesterSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-semester-start">Start Date</Label>
+              <Label htmlFor="edit-semester-start">Start Date *</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -341,7 +374,7 @@ export function SemesterSettings() {
               </Popover>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-semester-end">End Date</Label>
+              <Label htmlFor="edit-semester-end">End Date *</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -372,6 +405,30 @@ export function SemesterSettings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Semester?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove
+              {" "}
+              <span className="font-medium text-foreground">{deleteTarget?.name}</span>
+              . This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSaving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isSaving}
+            >
+              {isSaving ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -39,7 +39,7 @@ export function NavUser({
     name: string
     email: string
     image?: string | null
-    role: string
+    role?: string | null
   }
 }) {
   const { isMobile } = useSidebar()
@@ -56,7 +56,7 @@ export function NavUser({
     })
   }
 
-  const profileLink = user.role === "ADMIN" ? "/admin/profile" : user.role === "SUPERVISOR" ? "/supervisor/profile" : "/dashboard/profile"
+  const profileLink = user.role === "ADMIN" ? "/admin/profile" : "/dashboard/profile"
 
   return (
     <SidebarMenu>

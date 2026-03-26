@@ -37,10 +37,12 @@ export function LoginForm({
         const role = user.role
         if (role === "ADMIN") {
           router.push("/admin/dashboard")
-        } else if (role === "SUPERVISOR") {
-          router.push("/supervisor/dashboard")
-        } else {
+        } else if (role === "USER") {
           router.push("/dashboard")
+        } else if (role === "BANNED") {
+          router.push("/banned")
+        } else {
+          toast.error("Your account role is not supported by this version of the app.")
         }
       } else {
         toast.error("Hmm, we couldn't find an account with those details. Please try again.")

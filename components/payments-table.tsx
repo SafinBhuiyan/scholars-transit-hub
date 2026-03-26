@@ -232,10 +232,10 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
 
   const getStatusBadge = (status: Payment["status"]) => {
     const variants = {
-      PENDING: "bg-yellow-500/15 text-yellow-700 border-yellow-500/25",
-      PAID: "bg-green-500/15 text-green-700 border-green-500/25",
-      FAILED: "bg-red-500/15 text-red-700 border-red-500/25",
-      REFUNDED: "bg-blue-500/15 text-blue-700 border-blue-500/25",
+      PENDING: "bg-muted text-muted-foreground border-border",
+      PAID: "bg-primary/15 text-primary border-primary/25",
+      FAILED: "bg-destructive/15 text-destructive border-destructive/25",
+      REFUNDED: "bg-accent/15 text-accent-foreground border-accent/25",
     }
     return (
       <Badge variant="outline" className={variants[status]}>
@@ -248,12 +248,12 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
     if (!method) return <span className="text-muted-foreground text-xs">—</span>
     
     const colors = {
-      CASH: "bg-gray-500/15 text-gray-700 border-gray-500/25",
-      BKASH: "bg-pink-500/15 text-pink-700 border-pink-500/25",
-      NAGAD: "bg-orange-500/15 text-orange-700 border-orange-500/25",
-      ROCKET: "bg-purple-500/15 text-purple-700 border-purple-500/25",
-      BANK_TRANSFER: "bg-blue-500/15 text-blue-700 border-blue-500/25",
-      CARD: "bg-indigo-500/15 text-indigo-700 border-indigo-500/25",
+      CASH: "bg-muted text-muted-foreground border-border",
+      BKASH: "bg-primary/15 text-primary border-primary/25",
+      NAGAD: "bg-primary/10 text-primary border-primary/20",
+      ROCKET: "bg-accent/15 text-accent-foreground border-accent/25",
+      BANK_TRANSFER: "bg-secondary text-secondary-foreground border-border",
+      CARD: "bg-secondary text-secondary-foreground border-border",
     }
     
     return (

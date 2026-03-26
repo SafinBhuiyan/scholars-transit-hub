@@ -135,10 +135,10 @@ function SortablePickupItem({
                 </div>
                 
                 <div className="flex items-center gap-1.5 shrink-0">
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/70 hover:text-primary hover:bg-primary/10 rounded-md transition-all border border-border/40 shadow-[0_1px_2px_-1px_rgba(0,0,0,0.05)] bg-background/50" onClick={() => onEditPickup(pickup)}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/70 hover:text-primary hover:bg-primary/10 rounded-md transition-all border border-border/40 shadow-sm bg-background/50" onClick={() => onEditPickup(pickup)}>
                         <IconEdit className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-md transition-all border border-border/40 shadow-[0_1px_2px_-1px_rgba(0,0,0,0.05)] bg-background/50" onClick={() => onDeletePickup(pickup)}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-md transition-all border border-border/40 shadow-sm bg-background/50" onClick={() => onDeletePickup(pickup)}>
                         <IconTrash className="h-3.5 w-3.5" />
                     </Button>
                 </div>

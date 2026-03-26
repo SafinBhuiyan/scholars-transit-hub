@@ -40,10 +40,10 @@ export default function BannedPage() {
   return (
     <div className="flex min-h-svh items-center justify-center overflow-hidden bg-gradient-to-b from-background via-background to-muted/20 px-4">
       <div className="mx-auto flex w-full max-w-3xl flex-col justify-center">
-        <Card className="border-red-500/20 py-4 md:py-6">
+        <Card className="border-destructive/20 py-4 md:py-6">
           <CardHeader className="space-y-2 px-3 py-3 md:min-h-[520px] md:px-0 md:py-0">
             <div className="flex flex-col items-center justify-center gap-1 text-center md:min-h-[420px] md:gap-3">
-              <Badge variant="outline" className="w-fit bg-red-500/10 text-red-700 border-red-500/25">
+              <Badge variant="outline" className="w-fit bg-destructive/10 text-destructive border-destructive/25">
                 Account Restricted
               </Badge>
               <CardTitle className="text-xl md:text-3xl">Access locked</CardTitle>
@@ -57,7 +57,7 @@ export default function BannedPage() {
               </CardDescription>
               <Button
                 variant="outline"
-                className="w-fit border-red-500/25 bg-red-500/8 text-red-300 hover:bg-red-500/12 hover:text-red-200"
+                className="w-fit border-destructive/25 bg-destructive/8 text-destructive hover:bg-destructive/12 hover:text-destructive"
                 onClick={handleLogout}
               >
                 <IconLogout className="mr-2 h-4 w-4" />
@@ -88,13 +88,13 @@ export default function BannedPage() {
                       onClick={handleCopyPhone}
                       aria-label="Copy phone number"
                     >
-                      <IconCopy className={`h-3.5 w-3.5 ${copied ? "text-green-600" : ""}`} />
+                      <IconCopy className={`h-3.5 w-3.5 ${copied ? "text-primary" : ""}`} />
                     </Button>
                   </div>
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-xl border border-amber-500/20 bg-amber-500/8">
+              <div className="overflow-hidden rounded-xl border border-border bg-muted/8">
                 <div className="flex flex-col items-center justify-center p-3 text-center md:p-4">
                   <div className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
                     <p>

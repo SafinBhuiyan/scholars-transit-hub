@@ -104,7 +104,7 @@ export default function PassesPage() {
                 </div>
                 <Badge
                   variant="outline"
-                  className={record.status === "APPROVED" ? "bg-green-500/15 text-green-700 border-green-500/25" : "bg-yellow-500/15 text-yellow-700 border-yellow-500/25"}
+                  className={record.status === "APPROVED" ? "bg-primary/15 text-primary border-primary/25" : "bg-muted text-muted-foreground border-border"}
                 >
                   {record.status}
                 </Badge>

@@ -136,8 +136,8 @@ export default function GalleryPage() {
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
                   className="object-cover transition-transform duration-300"
                 />
-                <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start bg-black/25 px-3 py-2">
-                  <Badge variant="secondary" className="h-6 max-w-[65%] border-0 bg-white/90 px-2 text-[10px] font-semibold text-slate-700">
+                <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start bg-foreground/25 px-3 py-2">
+                  <Badge variant="secondary" className="h-6 max-w-[65%] border-0 bg-background/90 px-2 text-[10px] font-semibold text-foreground">
                     <span className="truncate">{image.department}</span>
                   </Badge>
                 </div>

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import { useForm } from "react-hook-form"
@@ -115,7 +115,7 @@ function PhoneVerification({
         <IconPhone className="h-4 w-4 text-muted-foreground" />
         <Label>Phone Number</Label>
         {isVerified && (
-          <Badge variant="outline" className="gap-1 bg-green-50 text-green-700 border-green-200">
+          <Badge variant="outline" className="gap-1 bg-primary/10 text-primary border-primary/20">
             <IconCheck className="h-3 w-3" /> Verified
           </Badge>
         )}
@@ -445,15 +445,15 @@ export default function ApplyPage() {
                     <Badge
                       variant="outline"
                       className={`
-                        ${existingApplication.status === "APPROVED" ? "bg-green-500/15 text-green-700 border-green-500/25" : ""}
-                        ${existingApplication.status === "REJECTED" ? "bg-red-500/15 text-red-700 border-red-500/25" : ""}
-                        ${existingApplication.status === "WAITLIST" ? "bg-yellow-500/15 text-yellow-700 border-yellow-500/25" : ""}
+                        ${existingApplication.status === "APPROVED" ? "bg-primary/15 text-primary border-primary/25" : ""}
+                        ${existingApplication.status === "REJECTED" ? "bg-destructive/15 text-destructive border-destructive/25" : ""}
+                        ${existingApplication.status === "WAITLIST" ? "bg-muted text-muted-foreground border-border" : ""}
                       `}
                     >
                       {existingApplication.status}
                     </Badge>
                     {existingApplication.phoneVerified && (
-                      <Badge variant="default" className="gap-1 bg-green-600">
+                      <Badge variant="default" className="gap-1">
                         <IconCheck className="h-3 w-3" />
                         Phone Verified
                       </Badge>
@@ -594,7 +594,7 @@ export default function ApplyPage() {
                   {...register("fullName")}
                 />
                 {errors.fullName && (
-                  <p className="text-sm text-red-500">{errors.fullName.message as string}</p>
+                  <p className="text-sm text-destructive">{errors.fullName.message as string}</p>
                 )}
               </div>
               
@@ -614,7 +614,7 @@ export default function ApplyPage() {
                     <SelectItem value="FT">Food Technology & Nutritional Science</SelectItem></SelectContent>
                 </Select>
                 {errors.department && (
-                  <p className="text-sm text-red-500">{errors.department.message as string}</p>
+                  <p className="text-sm text-destructive">{errors.department.message as string}</p>
                 )}
               </div>
             </div>
@@ -629,7 +629,7 @@ export default function ApplyPage() {
                     {...register("batch")}
                   />
                   {errors.batch && (
-                    <p className="text-sm text-red-500">{errors.batch.message as string}</p>
+                    <p className="text-sm text-destructive">{errors.batch.message as string}</p>
                   )}
                 </div>
                 
@@ -641,7 +641,7 @@ export default function ApplyPage() {
                     {...register("studentId")}
                   />
                   {errors.studentId && (
-                    <p className="text-sm text-red-500">{errors.studentId.message as string}</p>
+                    <p className="text-sm text-destructive">{errors.studentId.message as string}</p>
                   )}
                 </div>
               </div>
@@ -709,10 +709,10 @@ export default function ApplyPage() {
                 />
                 {idCardUrl ? (
                   <div className="flex flex-col items-center gap-2">
-                    <div className="h-16 w-24 rounded-lg bg-green-100 flex items-center justify-center">
-                      <IconCheck className="h-8 w-8 text-green-600" />
+                    <div className="h-16 w-24 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <IconCheck className="h-8 w-8 text-primary" />
                     </div>
-                    <p className="text-sm text-green-600 font-medium">Photo uploaded!</p>
+                    <p className="text-sm text-primary font-medium">Photo uploaded!</p>
                     <Button
                       type="button"
                       variant="outline"
@@ -739,7 +739,7 @@ export default function ApplyPage() {
                 />
               </div>
               {errors.idCardUrl && (
-                <p className="text-sm text-red-500">{errors.idCardUrl.message as string}</p>
+                <p className="text-sm text-destructive">{errors.idCardUrl.message as string}</p>
               )}
             </div>
           </CardContent>

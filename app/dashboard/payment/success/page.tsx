@@ -73,8 +73,8 @@ export default function PaymentSuccessPage() {
         <CardHeader className="text-center">
           {paymentStatus === "success" ? (
             <>
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                <IconCheck className="h-8 w-8 text-green-600" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <IconCheck className="h-8 w-8 text-primary" />
               </div>
               <CardTitle className="text-2xl">Payment Successful!</CardTitle>
               <CardDescription>
@@ -83,8 +83,8 @@ export default function PaymentSuccessPage() {
             </>
           ) : paymentStatus === "pending" ? (
             <>
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
-                <IconLoader className="h-8 w-8 text-yellow-600" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <IconLoader className="h-8 w-8 text-muted-foreground" />
               </div>
               <CardTitle className="text-2xl">Payment Processing</CardTitle>
               <CardDescription>
@@ -93,8 +93,8 @@ export default function PaymentSuccessPage() {
             </>
           ) : (
             <>
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-                <IconAlertCircle className="h-8 w-8 text-red-600" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+                <IconAlertCircle className="h-8 w-8 text-destructive" />
               </div>
               <CardTitle className="text-2xl">Verification Failed</CardTitle>
               <CardDescription>

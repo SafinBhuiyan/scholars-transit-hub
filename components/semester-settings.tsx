@@ -289,7 +289,7 @@ export function SemesterSettings() {
               semesters.map((semester) => (
                 <TableRow key={semester.id}>
                   <TableCell className="text-xs">
-                    <span className="inline-flex max-w-full items-center rounded-full border border-white/80 bg-white px-3 py-1 text-xs font-medium text-slate-900 shadow-sm">
+                    <span className="inline-flex max-w-full items-center rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-card-foreground shadow-sm">
                       {semester.name}
                     </span>
                   </TableCell>

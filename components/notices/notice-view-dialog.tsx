@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import {
@@ -33,10 +33,10 @@ export function NoticeViewDialog({ open, onOpenChange, notice }: NoticeViewDialo
 
   const getTypeIcon = (t: string) => {
     switch(t) {
-        case "INFO": return <IconInfoCircle className="h-5 w-5 text-blue-500" />
-        case "WARNING": return <IconAlertTriangle className="h-5 w-5 text-orange-500" />
-        case "SUCCESS": return <IconCircleCheck className="h-5 w-5 text-green-500" />
-        case "DANGER": return <IconAlertCircle className="h-5 w-5 text-red-500" />
+        case "INFO": return <IconInfoCircle className="h-5 w-5 text-primary" />
+        case "WARNING": return <IconAlertTriangle className="h-5 w-5 text-muted-foreground" />
+        case "SUCCESS": return <IconCircleCheck className="h-5 w-5 text-primary" />
+        case "DANGER": return <IconAlertCircle className="h-5 w-5 text-destructive" />
         default: return <IconInfoCircle className="h-5 w-5" />
     }
   }

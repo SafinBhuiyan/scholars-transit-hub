@@ -300,13 +300,13 @@ export function UsersTable() {
 
               </div>
 
-              <div className="mt-3 grid gap-2 md:mt-4 md:grid-cols-2">
+              <div className="mt-3 grid grid-cols-2 gap-2 md:mt-4">
                 {getRoleActions(user.role).map((action) => (
                   <Button
                     key={action.label}
                     variant={action.variant}
                     size="sm"
-                    className={`w-full rounded-xl ${action.label === "Remove Ban" ? "md:col-span-2" : ""}`}
+                    className={`w-full rounded-xl ${action.label === "Remove Ban" ? "col-span-2" : ""}`}
                     onClick={() => handleRoleChangeInitiate(user, action.role)}
                   >
                     {action.label}

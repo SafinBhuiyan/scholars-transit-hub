@@ -42,7 +42,7 @@ export default function BannedPage() {
       <div className="mx-auto flex w-full max-w-3xl flex-col justify-center">
         <Card className="border-destructive/20 py-4 md:py-6">
           <CardHeader className="space-y-2 px-3 py-3 md:min-h-[520px] md:px-0 md:py-0">
-            <div className="flex flex-col items-center justify-center gap-1 text-center md:min-h-[420px] md:gap-3">
+            <div className="flex flex-col items-center justify-center gap-4 text-center md:min-h-[420px] md:gap-3">
               <Badge variant="outline" className="w-fit bg-destructive/10 text-destructive border-destructive/25">
                 Account Restricted
               </Badge>
@@ -90,19 +90,6 @@ export default function BannedPage() {
                     >
                       <IconCopy className={`h-3.5 w-3.5 ${copied ? "text-primary" : ""}`} />
                     </Button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-xl border border-border bg-muted/8">
-                <div className="flex flex-col items-center justify-center p-3 text-center md:p-4">
-                  <div className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
-                    <p>
-                      If you believe this restriction was applied in error, please contact the appeal person below with your name, email, and ID.
-                    </p>
-                    <p>
-                      Keep the appeal brief and respectful. Include the reason for review and any details that may help.
-                    </p>
                   </div>
                 </div>
               </div>

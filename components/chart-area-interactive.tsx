@@ -144,6 +144,8 @@ const chartConfig = {
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = React.useState("90d")
+  const [fetchedData, setFetchedData] = React.useState<any[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
     if (isMobile) {
@@ -151,19 +153,24 @@ export function ChartAreaInteractive() {
     }
   }, [isMobile])
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date)
-    const referenceDate = new Date("2024-06-30")
-    let daysToSubtract = 90
-    if (timeRange === "30d") {
-      daysToSubtract = 30
-    } else if (timeRange === "7d") {
-      daysToSubtract = 7
+  React.useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      const days = timeRange.replace("d", "");
+      
+      try {
+        const response = await fetch(`/api/analytics/visitors?days=${days}`);
+        if (!response.ok) throw new Error("Failed to fetch");
+        const data = await response.json();
+        setFetchedData(data);
+      } catch (error) {
+        console.error("Error fetching analytics data:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
-    const startDate = new Date(referenceDate)
-    startDate.setDate(startDate.getDate() - daysToSubtract)
-    return date >= startDate
-  })
+    fetchData();
+  }, [timeRange])
 
   return (
     <Card className="@container/card">
@@ -210,11 +217,16 @@ export function ChartAreaInteractive() {
         </CardAction>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
-          <AreaChart data={filteredData}>
+        {isLoading ? (
+          <div className="flex aspect-auto h-[250px] w-full items-center justify-center text-muted-foreground">
+            Loading analytics...
+          </div>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[250px] w-full"
+          >
+            <AreaChart data={fetchedData}>
             <defs>
               <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
                 <stop
@@ -278,7 +290,8 @@ export function ChartAreaInteractive() {
               stackId="a"
             />
           </AreaChart>
-        </ChartContainer>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   )

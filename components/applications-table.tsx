@@ -123,9 +123,11 @@ type SemesterOption = {
 export function ApplicationsTable({
   data,
   semesters,
+  hideToolbar = false,
 }: {
   data: Application[]
   semesters: SemesterOption[]
+  hideToolbar?: boolean
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -550,75 +552,79 @@ export function ApplicationsTable({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Applications</h1>
-        <p className="text-muted-foreground">Review and process transport pass applications</p>
-      </div>
-
-      {/* Filter Bar with Counters */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="flex flex-1 items-center gap-2 w-full sm:w-auto">
-          <div className="relative w-full max-w-sm">
-            <IconSearch className="text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4" />
-            <Input
-              ref={searchRef}
-              placeholder="Search by name..."
-              value={(table.getColumn("fullName")?.getFilterValue() as string) ?? ""}
-              onChange={(event) =>
-                table.getColumn("fullName")?.setFilterValue(event.target.value)
-              }
-              className="pl-9 pr-12"
-            />
-            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:block">
-              <KbdGroup>
-                <Kbd>⌘</Kbd>
-                <Kbd>K</Kbd>
-              </KbdGroup>
-            </div>
+      {!hideToolbar && (
+        <>
+          {/* Page Header */}
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Applications</h1>
+            <p className="text-muted-foreground">Review and process transport pass applications</p>
           </div>
 
-          {/* Status Filters with Counters */}
-          <Select
-            value={(table.getColumn("status")?.getFilterValue() as string) ?? "WAITLIST"}
-            onValueChange={(value) => table.getColumn("status")?.setFilterValue(value === "ALL" ? "" : value)}
-          >
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Filter by Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">
-                All ({statusCounts.all})
-              </SelectItem>
-              <SelectItem value="WAITLIST">
-                Waitlist ({statusCounts.waitlist})
-              </SelectItem>
-              <SelectItem value="APPROVED">
-                Approved ({statusCounts.approved})
-              </SelectItem>
-              <SelectItem value="REJECTED">
-                Rejected ({statusCounts.rejected})
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Filter Bar with Counters */}
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-1 items-center gap-2 w-full sm:w-auto">
+              <div className="relative w-full max-w-sm">
+                <IconSearch className="text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4" />
+                <Input
+                  ref={searchRef}
+                  placeholder="Search by name..."
+                  value={(table.getColumn("fullName")?.getFilterValue() as string) ?? ""}
+                  onChange={(event) =>
+                    table.getColumn("fullName")?.setFilterValue(event.target.value)
+                  }
+                  className="pl-9 pr-12"
+                />
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:block">
+                  <KbdGroup>
+                    <Kbd>⌘</Kbd>
+                    <Kbd>K</Kbd>
+                  </KbdGroup>
+                </div>
+              </div>
 
-          {/* Type Filter */}
-          <Select
-            value={(table.getColumn("applicantType")?.getFilterValue() as string) ?? "ALL"}
-            onValueChange={(value) => table.getColumn("applicantType")?.setFilterValue(value === "ALL" ? "" : value)}
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Types</SelectItem>
-              <SelectItem value="STUDENT">Student</SelectItem>
-              <SelectItem value="ACADEMIC">Academic</SelectItem>
-              <SelectItem value="ADMINISTRATIVE">Admin</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+              {/* Status Filters with Counters */}
+              <Select
+                value={(table.getColumn("status")?.getFilterValue() as string) ?? "WAITLIST"}
+                onValueChange={(value) => table.getColumn("status")?.setFilterValue(value === "ALL" ? "" : value)}
+              >
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Filter by Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">
+                    All ({statusCounts.all})
+                  </SelectItem>
+                  <SelectItem value="WAITLIST">
+                    Waitlist ({statusCounts.waitlist})
+                  </SelectItem>
+                  <SelectItem value="APPROVED">
+                    Approved ({statusCounts.approved})
+                  </SelectItem>
+                  <SelectItem value="REJECTED">
+                    Rejected ({statusCounts.rejected})
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Type Filter */}
+              <Select
+                value={(table.getColumn("applicantType")?.getFilterValue() as string) ?? "ALL"}
+                onValueChange={(value) => table.getColumn("applicantType")?.setFilterValue(value === "ALL" ? "" : value)}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Types</SelectItem>
+                  <SelectItem value="STUDENT">Student</SelectItem>
+                  <SelectItem value="ACADEMIC">Academic</SelectItem>
+                  <SelectItem value="ADMINISTRATIVE">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Table */}
       <div className="rounded-md border">

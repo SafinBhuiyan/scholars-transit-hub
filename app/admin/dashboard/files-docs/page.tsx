@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,10 +37,11 @@ import {
   IconDownload,
   IconEye,
   IconTrash,
-  IconLoader,
   IconX,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
+import { AdminCardGridSkeleton } from "@/components/admin/admin-card-grid-skeleton"
+import { Spinner } from "@/components/ui/spinner"
 
 interface FileItem {
   id: string
@@ -62,9 +64,9 @@ interface CategoryItem {
 const PdfPreview = dynamic(() => import("./pdf-preview").then((mod) => mod.PdfPreview), {
   ssr: false,
   loading: () => (
-    <div className="rounded-2xl border bg-muted/20 p-3">
-      <div className="flex aspect-[210/297] w-full items-center justify-center rounded-xl bg-background text-xs text-muted-foreground">
-        Loading preview...
+    <div className="rounded-xl bg-muted/20 p-1.5">
+      <div className="aspect-[210/297] w-full rounded-lg bg-background">
+        <Skeleton className="h-full w-full rounded-lg" />
       </div>
     </div>
   ),
@@ -230,37 +232,15 @@ export default function FilesDocsPage() {
     }
   }
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-  }
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    })
-  }
-
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      {/* Page Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Files & Docs</h1>
-          <p className="text-xs text-muted-foreground">
-            Manage official documents, policies, and files
-          </p>
-        </div>
+    <div className="flex flex-1 flex-col gap-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Files & Docs</h1>
+        <p className="text-muted-foreground">
+          Manage official documents, policies, and files
+        </p>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full sm:w-fit overflow-hidden">
           <TabsList className="bg-muted/50 p-1 w-full flex overflow-x-auto justify-start sm:justify-center no-scrollbar">
@@ -284,13 +264,8 @@ export default function FilesDocsPage() {
         </Button>
       </div>
 
-      {/* Files Grid */}
       {isLoading ? (
-        <Card>
-          <CardContent className="flex h-40 items-center justify-center">
-            <IconLoader className="h-6 w-6 animate-spin text-muted-foreground" />
-          </CardContent>
-        </Card>
+        <AdminCardGridSkeleton cards={6} previewAspect="aspect-[210/297]" />
       ) : filteredFiles.length === 0 ? (
         <Card>
           <CardContent className="flex h-40 items-center justify-center text-sm text-muted-foreground">
@@ -298,14 +273,14 @@ export default function FilesDocsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {filteredFiles.map((file) => {
             const fileName = file.originalName || file.fileName || file.publicId.split("/").pop() || "Untitled file"
 
             return (
               <div
                 key={file.id}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-300 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5"
+                className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-sm transition-all duration-300 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5"
               >
                 <div className="flex flex-1 flex-col gap-3 p-4">
                   <div className="relative">
@@ -333,7 +308,6 @@ export default function FilesDocsPage() {
                   </div>
                 </div>
 
-                {/* Footer */}
                 <div className="p-3 bg-muted/5 border-t border-border/30 flex items-center justify-between gap-2 opacity-100 group-hover:bg-muted/20 transition-colors">
                   <Button
                     variant="outline"
@@ -456,7 +430,7 @@ export default function FilesDocsPage() {
             <Button onClick={handleUpload} disabled={!uploadFile || isUploading}>
               {isUploading ? (
                 <>
-                  <IconLoader className="h-4 w-4 mr-2 animate-spin" />
+                  <Spinner className="mr-2" />
                   Uploading...
                 </>
               ) : (

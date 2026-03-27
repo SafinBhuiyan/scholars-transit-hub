@@ -3,6 +3,8 @@
 import * as React from "react"
 import { IconFile } from "@tabler/icons-react"
 import { Document, Page, pdfjs } from "react-pdf"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Spinner } from "@/components/ui/spinner"
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -12,6 +14,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 export function PdfPreview({ fileUrl, format }: { fileUrl: string; format: string }) {
   const containerRef = React.useRef<HTMLDivElement | null>(null)
   const [pageWidth, setPageWidth] = React.useState(0)
+  const [shouldRender, setShouldRender] = React.useState(false)
+  const [isDocumentLoading, setIsDocumentLoading] = React.useState(true)
 
   React.useEffect(() => {
     const node = containerRef.current
@@ -29,18 +33,47 @@ export function PdfPreview({ fileUrl, format }: { fileUrl: string; format: strin
     return () => observer.disconnect()
   }, [])
 
+  React.useEffect(() => {
+    const node = containerRef.current
+    if (!node) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setShouldRender(true)
+          observer.disconnect()
+        }
+      },
+      {
+        rootMargin: "300px",
+      }
+    )
+
+    observer.observe(node)
+
+    return () => observer.disconnect()
+  }, [])
+
+  React.useEffect(() => {
+    setIsDocumentLoading(true)
+  }, [fileUrl])
+
   return (
     <div className="rounded-xl bg-muted/20 p-1.5">
       <div
         ref={containerRef}
         className="flex aspect-210/297 w-full items-center justify-center overflow-hidden rounded-lg bg-background [&_.react-pdf__Document]:flex [&_.react-pdf__Document]:h-full [&_.react-pdf__Document]:w-full [&_.react-pdf__Page]:flex [&_.react-pdf__Page]:h-full [&_.react-pdf__Page]:w-full [&_.react-pdf__Page]:items-center [&_.react-pdf__Page]:justify-center [&_.react-pdf__Page__canvas]:h-auto [&_.react-pdf__Page__canvas]:max-h-full [&_.react-pdf__Page__canvas]:w-auto [&_.react-pdf__Page__canvas]:max-w-full"
       >
-        {pageWidth > 0 ? (
+        {!shouldRender || pageWidth === 0 ? (
+          <Skeleton className="h-full w-full rounded-lg" />
+        ) : (
           <Document
             file={fileUrl}
+            onLoadSuccess={() => setIsDocumentLoading(false)}
+            onLoadError={() => setIsDocumentLoading(false)}
             loading={
-              <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                Loading preview...
+              <div className="flex h-full w-full items-center justify-center">
+                <Skeleton className="h-full w-full rounded-lg" />
               </div>
             }
             error={
@@ -54,16 +87,26 @@ export function PdfPreview({ fileUrl, format }: { fileUrl: string; format: strin
                 </div>
               </div>
             }
-            className="flex h-full w-full items-center justify-center bg-background"
+            className="relative flex h-full w-full items-center justify-center bg-background"
           >
+            {isDocumentLoading ? (
+              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-[1px]">
+                <Spinner className="h-4 w-4 text-muted-foreground" />
+              </div>
+            ) : null}
             <Page
               pageNumber={1}
               width={pageWidth}
               renderAnnotationLayer={false}
               renderTextLayer={false}
+              loading={
+                <div className="flex h-full w-full items-center justify-center">
+                  <Spinner className="h-4 w-4 text-muted-foreground" />
+                </div>
+              }
             />
           </Document>
-        ) : null}
+        )}
       </div>
     </div>
   )

@@ -3,6 +3,7 @@
 import {
   type Icon,
 } from "@tabler/icons-react"
+import { usePathname } from "next/navigation"
 
 import {
   SidebarGroup,
@@ -11,6 +12,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+
+function isSidebarItemActive(pathname: string, url: string) {
+  if (pathname === url) return true
+  if (url === "/dashboard" || url === "/admin/dashboard") return false
+  return pathname.startsWith(`${url}/`)
+}
 
 export function NavDocuments({
   items,
@@ -23,13 +30,18 @@ export function NavDocuments({
   }[]
   label?: string
 }) {
+  const pathname = usePathname()
+
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton
+              isActive={isSidebarItemActive(pathname, item.url)}
+              asChild
+            >
               <a href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>

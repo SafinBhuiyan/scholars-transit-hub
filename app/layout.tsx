@@ -37,7 +37,6 @@ export const metadata: Metadata = {
   },
 };
 
-import { SplashScreen } from "@/components/splash-screen";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -88,7 +87,6 @@ export default function RootLayout({
             `}
           </Script>
           <TooltipProvider>
-            <SplashScreen />
             {children}
             <Toaster richColors expand={false} />
             <Analytics />

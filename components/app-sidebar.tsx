@@ -148,16 +148,15 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="h-16 shrink-0 justify-center gap-0 border-b px-3 py-0">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="h-12 hover:bg-transparent active:bg-transparent px-2"
+              className="h-16 px-1 hover:bg-transparent active:bg-transparent"
             >
-              <a href={dashboardUrl} className="flex items-center gap-2">
-                <Logo className="h-8 w-auto" />
-                <span className="text-sm font-bold leading-tight tracking-tight uppercase">Scholars Transit</span>
+              <a href={dashboardUrl} className="flex items-center">
+                <Logo className="h-7 w-auto" />
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -173,7 +172,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           </>
         )}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-border/70 px-3 py-3">
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>

@@ -2,11 +2,12 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { IconSearch, IconDownload, IconEye, IconLoader } from "@tabler/icons-react"
+import { IconSearch, IconDownload, IconEye } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import { AdminCardGridSkeleton } from "@/components/admin/admin-card-grid-skeleton"
 
 interface ImageItem {
   id: string
@@ -84,48 +86,43 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      {/* Page Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">ID Cards</h1>
-          <p className="text-xs text-muted-foreground">
-            View ID card images submitted through transport applications
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchImages}>
-            Refresh
-          </Button>
-        </div>
+    <div className="flex flex-1 flex-col gap-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">ID Cards</h1>
+        <p className="text-muted-foreground">
+          View ID card images submitted through transport applications
+        </p>
       </div>
 
-      {/* Search */}
-      <div className="relative w-full sm:w-72">
-        <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <Input
-          placeholder="Search by name, student ID, department..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-8"
-        />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full max-w-xl">
+          <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, student ID, department, or file..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button variant="outline" onClick={fetchImages} className="sm:w-auto">
+          Refresh
+        </Button>
       </div>
 
-      {/* Gallery Grid */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <IconLoader className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <AdminCardGridSkeleton cards={6} />
       ) : filteredImages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground">No images found</p>
-        </div>
+        <Card>
+          <CardContent className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+            No images found
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {filteredImages.map((image) => (
             <Card
               key={image.id}
-              className="group overflow-hidden cursor-pointer border-border/60 bg-card/80 transition-all group-hover:bg-muted/10 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5"
+              className="group cursor-pointer overflow-hidden border-border/60 bg-card shadow-sm transition-all hover:border-primary/20 hover:bg-muted/10 hover:shadow-xl hover:shadow-primary/5"
               onClick={() => setSelectedImage(image)}
             >
               <div className="relative aspect-square overflow-hidden bg-muted">
@@ -133,7 +130,7 @@ export default function GalleryPage() {
                   src={image.url}
                   alt={image.applicantName}
                   fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
                   className="object-cover transition-transform duration-300"
                 />
                 <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start bg-foreground/25 px-3 py-2">
@@ -186,6 +183,7 @@ export default function GalleryPage() {
             <div className="space-y-4">
               <div className="relative overflow-hidden rounded-lg bg-muted">
                 <div className="relative h-[60vh] w-full">
+                  <Skeleton className="absolute inset-0" />
                   <Image
                     src={selectedImage.url}
                     alt={selectedImage.applicantName}

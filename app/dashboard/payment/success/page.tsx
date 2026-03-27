@@ -42,8 +42,7 @@ export default function PaymentSuccessPage() {
         setPaymentStatus("pending")
         toast.info("Payment is being processed. Please check back later.")
       }
-    } catch (error) {
-      console.error("Verification error:", error)
+    } catch {
       setPaymentStatus("failed")
       toast.error("Failed to verify payment")
     } finally {

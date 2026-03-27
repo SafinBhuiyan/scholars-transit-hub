@@ -90,9 +90,8 @@ export function PickupPointDialog({
             toast.success(pickup ? "Pickup point updated" : "Pickup point added")
             onSuccess()
             onOpenChange(false)
-        } catch (error) {
+        } catch {
             toast.error("Something went wrong")
-            console.error(error)
         } finally {
             setIsSubmitting(false)
         }

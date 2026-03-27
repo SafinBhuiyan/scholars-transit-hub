@@ -48,8 +48,7 @@ export default function RoutesPage() {
                 const data = await response.json()
                 setRoutes(data)
             }
-        } catch (error) {
-            console.error("Failed to fetch routes", error)
+        } catch {
             toast.error("Failed to load routes")
         } finally {
             setIsLoading(false)
@@ -76,7 +75,7 @@ export default function RoutesPage() {
             } else {
                 throw new Error()
             }
-        } catch (error) {
+        } catch {
             toast.error("Failed to delete")
         } finally {
             setIsDeleting(false)

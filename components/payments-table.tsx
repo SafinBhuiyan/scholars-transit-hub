@@ -34,12 +34,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -265,7 +259,16 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
 
   const columns: ColumnDef<Payment>[] = [
     {
+      id: "payee",
       accessorKey: "application.user.name",
+      accessorFn: (row) =>
+        [
+          row.application.fullName,
+          row.application.user.email,
+          row.transactionId ?? "",
+        ]
+          .join(" ")
+          .toLowerCase(),
       header: ({ column }) => {
         return (
           <Button
@@ -461,9 +464,9 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
           <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Search by name, email, or transaction ID..."
-            value={(table.getColumn("application.user.name")?.getFilterValue() as string) ?? ""}
+            value={(table.getColumn("payee")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table.getColumn("application.user.name")?.setFilterValue(event.target.value)
+              table.getColumn("payee")?.setFilterValue(event.target.value)
             }
             className="pl-8 h-9 text-xs"
           />
@@ -485,30 +488,6 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
             <SelectItem value="REFUNDED">Refunded</SelectItem>
           </SelectContent>
         </Select>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 text-xs">
-              Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       {/* Table */}
@@ -565,12 +544,12 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
-        <div className="flex-1 text-xs text-muted-foreground">
+        <div className="hidden flex-1 text-xs text-muted-foreground lg:flex">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <div className="flex items-center space-x-6 lg:space-x-8">
-          <div className="flex items-center space-x-2">
+        <div className="flex w-full items-center gap-3 sm:gap-6 lg:w-fit lg:gap-8">
+          <div className="hidden items-center gap-2 lg:flex">
             <p className="text-xs font-medium">Rows per page</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
@@ -590,41 +569,49 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex w-[100px] items-center justify-center text-xs font-medium">
+          <div className="flex min-w-0 flex-1 items-center text-xs font-medium sm:flex-none sm:justify-center">
             Page {table.getState().pagination.pageIndex + 1} of{" "}
             {table.getPageCount()}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="ml-auto flex items-center gap-2 lg:ml-0">
             <Button
               variant="outline"
               className="hidden h-8 w-8 p-0 lg:flex"
+              size="icon"
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
+              <span className="sr-only">Go to first page</span>
               <IconChevronsLeft className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
-              className="h-8 w-8 p-0"
+              className="size-8"
+              size="icon"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
+              <span className="sr-only">Go to previous page</span>
               <IconChevronLeft className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
-              className="h-8 w-8 p-0"
+              className="size-8"
+              size="icon"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
+              <span className="sr-only">Go to next page</span>
               <IconChevronRight className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
+              className="hidden size-8 lg:flex"
+              size="icon"
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
             >
+              <span className="sr-only">Go to last page</span>
               <IconChevronsRight className="h-4 w-4" />
             </Button>
           </div>

@@ -96,9 +96,8 @@ export function RouteDialog({
             toast.success(route ? "Route updated successfully" : "Route created successfully")
             onSuccess()
             onOpenChange(false)
-        } catch (error) {
+        } catch {
             toast.error("Something went wrong")
-            console.error(error)
         } finally {
             setIsSubmitting(false)
         }

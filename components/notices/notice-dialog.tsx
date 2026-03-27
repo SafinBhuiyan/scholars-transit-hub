@@ -95,8 +95,7 @@ export function NoticeDialog({ open, onOpenChange, onSuccess, notice }: NoticeDi
         const data = await res.json()
         setSearchResults(data)
       }
-    } catch (error) {
-      console.error("Search error:", error)
+    } catch {
     } finally {
       setIsSearching(false)
     }
@@ -152,7 +151,7 @@ export function NoticeDialog({ open, onOpenChange, onSuccess, notice }: NoticeDi
       toast.success(notice ? "Notice updated" : "Notice created")
       onSuccess()
       onOpenChange(false)
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong")
     } finally {
       setIsSubmitting(false)

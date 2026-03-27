@@ -55,8 +55,7 @@ export function OTPForm({ className, ...props }: React.ComponentProps<"div">) {
         toast.error("Maximum attempts reached. Your progress has been cleared. Please sign up again.")
         router.push("/signup")
       }
-    } catch (error) {
-      console.error("Delete error:", error)
+    } catch {
     } finally {
       setIsDeleting(false)
     }

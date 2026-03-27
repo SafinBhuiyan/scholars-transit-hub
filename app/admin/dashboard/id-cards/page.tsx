@@ -53,8 +53,7 @@ export default function GalleryPage() {
       } else {
         toast.error(data.error || "Failed to load images")
       }
-    } catch (error) {
-      console.error("Failed to fetch images:", error)
+    } catch {
       toast.error("Failed to load images")
     } finally {
       setIsLoading(false)

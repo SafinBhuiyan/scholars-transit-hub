@@ -102,8 +102,7 @@ export default function FilesDocsPage() {
       } else {
         toast.error(data.error || "Failed to load categories")
       }
-    } catch (error) {
-      console.error("Failed to fetch categories:", error)
+    } catch {
       toast.error("Failed to load categories")
     }
   }, [])
@@ -119,8 +118,7 @@ export default function FilesDocsPage() {
       } else {
         toast.error(data.error || "Failed to load files")
       }
-    } catch (error) {
-      console.error("Failed to fetch files:", error)
+    } catch {
       toast.error("Failed to load files")
     } finally {
       setIsLoading(false)
@@ -200,8 +198,7 @@ export default function FilesDocsPage() {
       } else {
         toast.error(data.error || "Failed to upload file")
       }
-    } catch (error) {
-      console.error("Upload error:", error)
+    } catch {
       toast.error("Failed to upload file")
     } finally {
       setIsUploading(false)
@@ -223,8 +220,7 @@ export default function FilesDocsPage() {
       } else {
         toast.error(data.error || "Failed to delete file")
       }
-    } catch (error) {
-      console.error("Delete error:", error)
+    } catch {
       toast.error("Failed to delete file")
     } finally {
       setIsDeleteDialogOpen(false)

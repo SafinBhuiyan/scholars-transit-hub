@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
 import { cn, formatDateShort } from "@/lib/utils"
 import Link from "next/link"
 import { authClient } from "@/lib/auth-client"
@@ -43,8 +42,7 @@ export function NotificationBell() {
         const data = await res.json()
         setNotices(data)
       }
-    } catch (error) {
-      console.error("Failed to fetch notifications")
+    } catch {
     } finally {
       setIsLoading(false)
     }
@@ -63,8 +61,7 @@ export function NotificationBell() {
       if (res.ok) {
         setNotices(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
       }
-    } catch (error) {
-      console.error("Failed to mark as read")
+    } catch {
     }
   }
 

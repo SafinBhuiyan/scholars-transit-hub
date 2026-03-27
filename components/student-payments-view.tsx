@@ -94,16 +94,6 @@ export function StudentPaymentsView({
   // Check if user is a student
   const isStudent = application.applicantType === "STUDENT"
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log("StudentPaymentsView - Payments:", payments)
-    console.log("StudentPaymentsView - Pending Payment:", pendingPayment)
-    if (pendingPayment) {
-      console.log("Pending Payment Amount:", pendingPayment.amount)
-      console.log("Pending Payment Amount Type:", typeof pendingPayment.amount)
-    }
-  }, [payments, pendingPayment])
-
   return (
     <div className="space-y-6">
       {/* Header */}

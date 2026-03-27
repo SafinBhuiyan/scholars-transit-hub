@@ -309,8 +309,7 @@ export default function ApplyPage() {
         if (response.ok) {
           setRoutes(data.routes || [])
         }
-      } catch (error) {
-        console.error("Failed to fetch routes:", error)
+      } catch {
       } finally {
         setLoadingRoutes(false)
       }
@@ -327,8 +326,7 @@ export default function ApplyPage() {
         if (response.ok && data.application) {
           setExistingApplication(data.application)
         }
-      } catch (error) {
-        console.error("Failed to fetch application:", error)
+      } catch {
       } finally {
         setLoadingApplication(false)
       }

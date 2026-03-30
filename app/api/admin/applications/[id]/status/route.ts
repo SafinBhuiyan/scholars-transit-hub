@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { resend, renderEmailTemplate } from "@/lib/email"
+import { renderEmailTemplate, sendEmail } from "@/lib/email"
 
 export async function PATCH(
     request: Request,
@@ -35,19 +35,20 @@ export async function PATCH(
         if (application.user?.email) {
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000"
             if (status === "REJECTED") {
-                await resend.emails.send({
+                await sendEmail({
                     from: "Scholars Transit Hub <no-reply@divupstudio.online>",
                     to: [application.user.email],
-                    subject: "Your Transport Pass Application Was Rejected",
+                    subject: "Update on Your Transport Pass Application",
                     html: renderEmailTemplate({
-                        title: "Application Rejected",
+                        title: "Application Update",
                         greetingName: application.fullName,
                         bodyHtml: `
-                          <p>We regret to inform you that your transport pass application has been rejected.</p>
+                          <p>Thank you for your interest in the Scholars Transit Hub transport service.</p>
+                          <p>After review, we are unable to approve your application at this time.</p>
                           ${reason ? `<div style="background: #fef2f2; padding: 16px; border-radius: 8px; margin: 16px 0;">
-                            <p style="margin: 0; color: #b91c1c;"><strong>Reason:</strong> ${reason}</p>
+                            <p style="margin: 0; color: #b91c1c;"><strong>Review note:</strong> ${reason}</p>
                           </div>` : ""}
-                          <p>If you believe this is a mistake or need assistance, please contact us.</p>
+                          <p>If you believe this was sent in error or would like clarification, please contact the transport office or check your dashboard for updates.</p>
                           <p style="margin-top: 12px;">
                             <a href="${baseUrl}/dashboard" style="color: #5C60DB; text-decoration: underline;">Go to your dashboard</a>
                           </p>
@@ -57,7 +58,7 @@ export async function PATCH(
             }
 
             if (status === "WAITLIST") {
-                await resend.emails.send({
+                await sendEmail({
                     from: "Scholars Transit Hub <no-reply@divupstudio.online>",
                     to: [application.user.email],
                     subject: "Your Transport Pass Application Is on the Waitlist",
@@ -65,8 +66,9 @@ export async function PATCH(
                         title: "Application Waitlisted",
                         greetingName: application.fullName,
                         bodyHtml: `
-                          <p>Your transport pass application has been moved to the waitlist.</p>
-                          <p>We will notify you as soon as a seat becomes available or your application status changes.</p>
+                          <p>Your transport pass application has been placed on the waitlist.</p>
+                          <p>We will review availability and notify you as soon as your status changes.</p>
+                          <p>No action is required from you at this time.</p>
                           <p style="margin-top: 12px;">
                             <a href="${baseUrl}/dashboard" style="color: #5C60DB; text-decoration: underline;">Check your application status</a>
                           </p>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
-import { resend, renderEmailTemplate } from "@/lib/email"
+import { renderEmailTemplate, sendEmail } from "@/lib/email"
 import { generateInvoiceNumber } from "@/lib/uddoktapay"
 
 export async function POST(
@@ -112,15 +112,16 @@ export async function POST(
         })
 
         try {
-            await resend.emails.send({
+            await sendEmail({
                 from: "Scholars Transit Hub <no-reply@divupstudio.online>",
                 to: [application.user.email],
-                subject: "Payment Request for Your Transport Pass",
+                subject: "Payment Request for Your Transport Pass Application",
                 html: renderEmailTemplate({
                     title: "Payment Request",
                     greetingName: application.fullName,
                     bodyHtml: `
-                      <p>Your transport pass application has been approved and a payment request has been created.</p>
+                      <p>Your transport pass application has been approved.</p>
+                      <p>Please complete the payment below to continue with pass issuance.</p>
                       <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
                         <p style="margin: 0;"><strong>Semester:</strong> ${semester.name}</p>
                         <p style="margin: 8px 0 0;"><strong>Amount:</strong> ${amount} BDT</p>
@@ -128,7 +129,7 @@ export async function POST(
                       <a href="https://www.divupstudio.online/dashboard/payments" style="display: inline-block; padding: 12px 18px; background: #5C60DB; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600;">
                         Pay Now
                       </a>
-                      <p style="margin-top: 16px;">If you have already paid, you can ignore this message.</p>
+                      <p style="margin-top: 16px;">If you have already completed the payment, you can safely ignore this message.</p>
                     `,
                 }),
             })

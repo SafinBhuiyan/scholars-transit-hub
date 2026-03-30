@@ -28,9 +28,19 @@ export function NavSecondary({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <a href={item.url}>
+                <a
+                  href={item.url}
+                  target={item.url.startsWith("https://") ? "_blank" : undefined}
+                  rel={item.url.startsWith("https://") ? "noopener noreferrer" : undefined}
+                >
                   <item.icon />
-                  <span>{item.title}</span>
+                  <span>{item.title.includes("Builder") ? (
+                    <>
+                      {item.title.replace(" Builder", "")} <span className="underline font-bold">Builder</span>
+                    </>
+                  ) : (
+                    item.title
+                  )}</span>
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>

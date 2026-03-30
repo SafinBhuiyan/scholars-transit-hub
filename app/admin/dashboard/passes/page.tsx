@@ -37,7 +37,7 @@ export default function PassesPage() {
       }
       const data = await response.json()
       setResults(data)
-    } catch (error) {
+    } catch {
       toast.error("We couldn't load the pass records right now.")
     } finally {
       setLoading(false)

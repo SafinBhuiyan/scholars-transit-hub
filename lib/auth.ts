@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./prisma";
 import { emailOTP } from "better-auth/plugins"
-import { resend, renderEmailTemplate } from "./email";
+import { renderEmailTemplate, sendEmail } from "./email";
 
 
 export const auth = betterAuth({
@@ -31,21 +31,30 @@ export const auth = betterAuth({
             where: { email }
           });
           const name = user?.name || "Member";
+          const isPasswordReset = type === "forget-password";
 
-          await resend.emails.send({
+          await sendEmail({
             from: 'Scholars Transit Hub <no-reply@divupstudio.online>',
             to: [email],
-            subject: type === "forget-password" ? "Reset your password" : "Verify your email address",
-            text: `Your verification code is ${otp}. It will expire in 10 minutes.`,
+            subject: isPasswordReset
+              ? "Password Reset Code for Scholars Transit Hub"
+              : "Verify Your Scholars Transit Hub Email Address",
+            text: isPasswordReset
+              ? `We received a request to reset your Scholars Transit Hub password. Your verification code is ${otp}. It expires in 10 minutes.`
+              : `Welcome to Scholars Transit Hub. Your email verification code is ${otp}. It expires in 10 minutes.`,
             html: renderEmailTemplate({
-              title: type === "forget-password" ? "Reset your password" : "Verify your email",
+              title: isPasswordReset ? "Password Reset Code" : "Email Verification Code",
               greetingName: name,
               bodyHtml: `
-                <p>Thank you for using Scholars Transit Hub. Please use the following code for ${type.replace("-", " ")}:</p>
+                <p>${
+                  isPasswordReset
+                    ? "We received a request to reset your password. Please use the code below to continue."
+                    : "Please use the verification code below to confirm your email address."
+                }</p>
                 <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
                   <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #5C60DB;">${otp}</span>
                 </div>
-                <p>This code will expire in 10 minutes. If you didn't request this, you can safely ignore this email.</p>
+                <p>This code will expire in 10 minutes. If you did not request this message, you can safely ignore it.</p>
               `,
             }),
           });

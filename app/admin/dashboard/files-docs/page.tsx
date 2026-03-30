@@ -24,13 +24,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   IconUpload,
@@ -278,7 +271,7 @@ export default function FilesDocsPage() {
                 key={file.id}
                 className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-sm transition-all duration-300 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5"
               >
-                <div className="flex flex-1 flex-col gap-3 p-4">
+                <div className="flex flex-1 flex-col gap-2.5 p-3">
                   <div className="relative">
                     <Badge
                       variant="secondary"
@@ -292,19 +285,23 @@ export default function FilesDocsPage() {
                   </div>
 
                   <div className="flex flex-1 flex-col justify-between gap-2">
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <h3
-                        className="line-clamp-1 text-[13px] font-bold leading-snug transition-colors group-hover:text-primary sm:text-sm"
+                        className="text-[13px] font-bold leading-snug break-words transition-colors group-hover:text-primary sm:text-sm"
                         title={fileName}
                       >
                         {fileName}
                       </h3>
-                      <p className="line-clamp-1 text-[11px] text-muted-foreground/70">PDF document</p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground/70">
+                        <span>PDF document</span>
+                        <span className="hidden text-border sm:inline">•</span>
+                        <span>{new Date(file.createdAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-3 bg-muted/5 border-t border-border/30 flex items-center justify-between gap-2 opacity-100 group-hover:bg-muted/20 transition-colors">
+                <div className="flex items-center justify-between gap-2 border-t border-border/30 bg-muted/5 p-2.5 opacity-100 transition-colors group-hover:bg-muted/20">
                   <Button
                     variant="outline"
                     size="sm"
@@ -319,16 +316,16 @@ export default function FilesDocsPage() {
                   <div className="flex items-center gap-1.5">
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="h-7 w-7 rounded-md border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm bg-background/50"
+                      size="icon-sm"
+                      className="border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm bg-background/50"
                       onClick={() => window.open(file.url, "_blank")}
                     >
                       <IconDownload className="h-3 w-3" />
                     </Button>
                     <Button
                       variant="outline"
-                      size="icon"
-                      className="h-7 w-7 rounded-md border-border/40 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all shadow-sm bg-background/50"
+                      size="icon-sm"
+                      className="border-border/40 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all shadow-sm bg-background/50"
                       onClick={() => {
                         setFileToDelete(file.publicId)
                         setIsDeleteDialogOpen(true)
@@ -405,18 +402,24 @@ export default function FilesDocsPage() {
             </div>
             <div className="space-y-2">
               <Label>Category</Label>
-              <Select value={uploadCategory} onValueChange={setUploadCategory}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.name}>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((category) => {
+                  const isActive = uploadCategory === category.name
+
+                  return (
+                    <Button
+                      key={category.id}
+                      type="button"
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      className="rounded-full"
+                      onClick={() => setUploadCategory(category.name)}
+                    >
                       {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </Button>
+                  )
+                })}
+              </div>
             </div>
           </div>
           <DialogFooter>

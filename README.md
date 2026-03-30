@@ -13,6 +13,7 @@ Payment rules are role-aware:
 
 - Students pay for transport passes through UddoktaPay
 - Academic and administrative staff receive free passes
+- Approved users receive a pass view and QR-based verification flow
 
 ## Stack
 
@@ -63,10 +64,11 @@ Helpful files to start with:
 - Semester management
 - Files and docs management
 - Notice publishing and read tracking
+- Complaint / feedback submission and admin response workflow
 - Student payment initiation and verification
 - UddoktaPay webhook handling
 - Admin payment review and updates
-- Pass lookup and verification tools for admins
+- Pass lookup and QR-assisted verification tools for admins
 
 ## Local Setup
 
@@ -101,12 +103,14 @@ npx prisma generate
 npx prisma db push
 ```
 
+The complaint / feedback feature adds a new Prisma model, so `db push` is required on environments that do not already have the latest schema.
+
 If you are using migrations in your own workflow, replace `db push` with the appropriate migration command.
 
 ### 4. Run the app
 
 ```bash
-npm dev
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -135,7 +139,10 @@ User area:
 
 - `/dashboard`
 - `/dashboard/apply`
+- `/dashboard/pass`
 - `/dashboard/payments`
+- `/dashboard/notices`
+- `/dashboard/complaint-feedback`
 - `/dashboard/payment/success`
 - `/dashboard/payment/cancel`
 
@@ -143,11 +150,13 @@ Admin area:
 
 - `/admin/dashboard`
 - `/admin/dashboard/applications`
+- `/admin/dashboard/complaint-feedback`
 - `/admin/dashboard/routes`
 - `/admin/dashboard/payments`
 - `/admin/dashboard/users`
 - `/admin/dashboard/notices`
 - `/admin/dashboard/passes`
+- `/admin/dashboard/files-docs`
 - `/admin/dashboard/settings`
 - `/admin/dashboard/id-cards`
 
@@ -159,6 +168,7 @@ Important route groups under `app/api` include:
 - `applications`
 - `payments`
 - `admin/*`
+- `complaints`
 - `notices`
 - `upload`
 - `sms`
@@ -169,36 +179,42 @@ Important route groups under `app/api` include:
 
 The app has a substantial amount of real product functionality already implemented, especially around auth, admin workflows, database modeling, and payments.
 
-Known areas still called out in the project roadmap:
+Implemented recently:
 
-- user dashboard still contains hardcoded/demo data in places
-- admin dashboard stats and charts still need real database-backed values
-- transport pass page is not fully implemented
-- profile management is incomplete
-- end-to-end test coverage is missing
-- README and docs were previously under-documented
+- user dashboard now includes pass QR, notices, files/docs, and complaint/feedback access
+- transport pass page is implemented for approved users
+- admin pass lookup cards now include QR plus quick verification details
+- complaint / feedback now has:
+  - user submission and tracking
+  - admin review and status updates
+  - email alerts for submission and admin response
+- files/docs uses PDF preview cards in both admin and user surfaces
 
-See `plans/PROJECT_COMPLETION_ROADMAP.md` and `plans/FINAL_IMPLEMENTATION_TASKS.md` for the current project notes.
+Known gaps and follow-up areas:
+
+- admin dashboard summary stats/charts still need stronger real data coverage in some areas
+- profile management is still limited
+- there is still no automated end-to-end test suite
+- the public landing page is still not a polished production homepage
+- this repo still contains both `package-lock.json` and `bun.lock`
+- complaint alert emails require `COMPLAINT_ALERT_EMAILS` or similar env setup if team inbox alerts are desired
+
 
 ## Development Notes
 
 - `app/page.tsx` currently points to a demo-style component entry, so the landing page is not yet a polished production homepage
-- `app/dashboard/page.tsx` still references `data.json`, which is a good candidate for cleanup
 - auth and role gating are handled server-side in layout/page logic
 - Prisma client generation runs on `postinstall`
+- `react-pdf` previews are client-only and used in files/docs cards and preview dialogs
+- pass QR rendering is shared through `lib/pass.ts`
 
 ## Recommended Next Steps
 
 If you are continuing development, the highest-value cleanup path is:
 
-1. Replace hardcoded dashboard data with real queries
-2. Finish the transport pass flow
-3. Complete profile management
-4. Add integration or end-to-end tests for signup -> apply -> approve -> pay -> pass
-5. Standardize on a single package manager and document the expected env vars in a dedicated example file
+1. Add end-to-end coverage for signup -> apply -> approve -> pay -> pass -> verify
+2. Complete profile management and any remaining user self-service flows
+3. Improve admin dashboard reporting with more operational metrics
+4. Standardize on a single package manager
+5. Add a dedicated `.env.example` covering auth, payments, storage, email, and complaint alert settings
 
-## Related Docs
-
-- `plans/PROJECT_COMPLETION_ROADMAP.md`
-- `plans/FINAL_IMPLEMENTATION_TASKS.md`
-- `UDDOKTAPAY_INTEGRATION.md`

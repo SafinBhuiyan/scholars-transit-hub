@@ -50,6 +50,11 @@ export function UserNoticesList({ data }: { data: any[] }) {
     }
   }
 
+  const isExpired = (expiryDate?: string | null) => {
+    if (!expiryDate) return false
+    return new Date(expiryDate).setHours(23, 59, 59, 999) < new Date().getTime()
+  }
+
   return (
     <div className="space-y-6">
       {/* Grid Layout (Cards) */}
@@ -70,6 +75,11 @@ export function UserNoticesList({ data }: { data: any[] }) {
                     {notice.isPinned && (
                       <Badge variant="outline" className="h-6 w-6 p-0 flex items-center justify-center rounded-full border-primary/30 text-primary bg-primary/5">
                         <IconPinned className="h-3.5 w-3.5 fill-primary" />
+                      </Badge>
+                    )}
+                    {isExpired(notice.expiryDate) && (
+                      <Badge variant="outline" className="border-destructive/20 bg-destructive/10 text-destructive">
+                        Expired
                       </Badge>
                     )}
                   </div>

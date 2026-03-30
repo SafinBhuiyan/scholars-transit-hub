@@ -78,10 +78,11 @@ export function NotificationBell() {
   return (
     <DropdownMenu onOpenChange={(open) => { if (open) fetchNotices() }}>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="relative h-8 w-8">
-          <IconBell className="h-5 w-5" />
+        <Button variant="outline" size="sm" className="relative h-8 gap-2 px-3">
+          <IconBell className="h-4 w-4" />
+          <span>Notifications</span>
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground animate-in zoom-in">
+            <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground animate-in zoom-in">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}

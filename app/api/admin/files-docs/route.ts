@@ -275,30 +275,45 @@ export async function DELETE(request: Request) {
 
     const { cloudName, apiKey, apiSecret } = cloudinaryConfig
     const timestamp = Math.round(Date.now() / 1000)
-    const signatureString = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`
+    const destroyParams: Record<string, string> = {
+      public_id: publicId,
+      timestamp: timestamp.toString(),
+    }
+    const signatureString = Object.entries(destroyParams)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}=${value}`)
+      .join("&")
     const signature = crypto
       .createHash("sha1")
-      .update(signatureString)
+      .update(signatureString + apiSecret)
       .digest("hex")
 
-    const resourceUrl = `https://api.cloudinary.com/v1_1/${cloudName}/resources/raw/upload`
-    const response = await fetch(`${resourceUrl}?public_id=${encodeURIComponent(publicId)}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        timestamp,
-        signature,
-      }),
+    const cloudinaryFormData = new FormData()
+    cloudinaryFormData.append("public_id", publicId)
+    cloudinaryFormData.append("timestamp", timestamp.toString())
+    cloudinaryFormData.append("api_key", apiKey)
+    cloudinaryFormData.append("signature", signature)
+
+    const destroyUrl = `https://api.cloudinary.com/v1_1/${cloudName}/raw/destroy`
+    const response = await fetch(destroyUrl, {
+      method: "POST",
+      body: cloudinaryFormData,
     })
 
+    const result = await response.json()
+
     if (!response.ok) {
-      const result = await response.json()
       console.error("Cloudinary delete error:", result)
       return NextResponse.json(
         { error: result.error?.message || "Failed to delete file" },
+        { status: 500 }
+      )
+    }
+
+    if (result.result && !["ok", "not found"].includes(result.result)) {
+      console.error("Unexpected Cloudinary delete result:", result)
+      return NextResponse.json(
+        { error: "Failed to delete file from cloud storage" },
         { status: 500 }
       )
     }

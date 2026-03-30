@@ -1,22 +1,24 @@
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
-import { AdminComplaintsView } from "@/components/complaints/admin-complaints-view"
+import { AdminComplaintReviewForm } from "@/components/complaints/admin-complaint-review-form"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 
-export default async function ComplaintFeedbackPage() {
+export default async function ComplaintFeedbackReviewPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const session = await auth.api.getSession({ headers: await headers() })
 
   if (!session || session.user.role !== "ADMIN") {
     redirect("/dashboard")
   }
 
-  const complaints = await prisma.complaint.findMany({
-    orderBy: [
-      { updatedAt: "desc" },
-      { createdAt: "desc" },
-    ],
+  const { id } = await params
+  const complaint = await prisma.complaint.findUnique({
+    where: { id },
     include: {
       user: {
         select: {
@@ -36,9 +38,13 @@ export default async function ComplaintFeedbackPage() {
     },
   })
 
+  if (!complaint) {
+    redirect("/admin/dashboard/complaint-feedback")
+  }
+
   return (
-    <AdminComplaintsView
-      initialComplaints={complaints.map((complaint) => ({
+    <AdminComplaintReviewForm
+      complaint={{
         id: complaint.id,
         type: complaint.type,
         status: complaint.status,
@@ -51,7 +57,7 @@ export default async function ComplaintFeedbackPage() {
         updatedAt: complaint.updatedAt.toISOString(),
         user: complaint.user,
         statusUpdatedBy: complaint.statusUpdatedBy,
-      }))}
+      }}
     />
   )
 }

@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma"
 import { UserNoticesList } from "@/components/notices/user-notices-list"
 import { auth } from "@/lib/auth"
+import { getUserNoticeWhere } from "@/lib/notices"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
@@ -11,15 +12,8 @@ export default async function UserNoticesPage() {
     redirect("/login")
   }
 
-  const now = new Date()
   const notices = await prisma.notice.findMany({
-    where: {
-      isPublished: true,
-      OR: [
-        { expiryDate: null },
-        { expiryDate: { gte: now } }
-      ]
-    },
+    where: getUserNoticeWhere(session.user.id, "USER"),
     orderBy: [
       { isPinned: "desc" },
       { createdAt: "desc" }
@@ -27,9 +21,19 @@ export default async function UserNoticesPage() {
     include: {
       createdBy: {
         select: { name: true }
-      }
+      },
+      userNotices: {
+        where: { userId: session.user.id },
+      },
     }
   })
+
+  const formattedNotices = notices.map((notice) => ({
+    ...notice,
+    isRead: notice.userNotices.length > 0 ? notice.userNotices[0].isRead : false,
+    readAt: notice.userNotices.length > 0 ? notice.userNotices[0].readAt : null,
+    userNotices: undefined,
+  }))
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -38,7 +42,7 @@ export default async function UserNoticesPage() {
         <p className="text-muted-foreground">View system announcements and alerts.</p>
       </div>
       
-      <UserNoticesList data={notices} />
+      <UserNoticesList data={formattedNotices} />
     </div>
   )
 }

@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { useTheme } from "next-themes"
 
 import { cn } from "@/lib/utils"
+import { useTheme } from "@/components/theme-provider"
 
 interface LogoProps extends React.HTMLAttributes<HTMLSpanElement> {
   className?: string

@@ -1,31 +1,25 @@
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
-import { AdminComplaintsView } from "@/components/complaints/admin-complaints-view"
+import { UserComplaintsView } from "@/components/complaints/user-complaints-view"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 
-export default async function ComplaintFeedbackPage() {
+export default async function ComplaintFeedbackUserPage() {
   const session = await auth.api.getSession({ headers: await headers() })
 
-  if (!session || session.user.role !== "ADMIN") {
-    redirect("/dashboard")
+  if (!session) {
+    redirect("/login")
   }
 
   const complaints = await prisma.complaint.findMany({
-    orderBy: [
-      { updatedAt: "desc" },
-      { createdAt: "desc" },
-    ],
+    where: {
+      userId: session.user.id,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
     include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-        },
-      },
       statusUpdatedBy: {
         select: {
           id: true,
@@ -37,7 +31,7 @@ export default async function ComplaintFeedbackPage() {
   })
 
   return (
-    <AdminComplaintsView
+    <UserComplaintsView
       initialComplaints={complaints.map((complaint) => ({
         id: complaint.id,
         type: complaint.type,
@@ -49,7 +43,6 @@ export default async function ComplaintFeedbackPage() {
         statusUpdatedAt: complaint.statusUpdatedAt?.toISOString() ?? null,
         createdAt: complaint.createdAt.toISOString(),
         updatedAt: complaint.updatedAt.toISOString(),
-        user: complaint.user,
         statusUpdatedBy: complaint.statusUpdatedBy,
       }))}
     />

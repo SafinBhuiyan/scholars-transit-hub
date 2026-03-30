@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { z } from "zod"
 import prisma from "@/lib/prisma"
-import { resend, renderEmailTemplate } from "@/lib/email"
+import { renderEmailTemplate, sendEmail } from "@/lib/email"
 
 
 
@@ -49,19 +49,19 @@ export async function PATCH(
 
         // Send email notification
         try {
-            await resend.emails.send({
+            await sendEmail({
                 from: 'Scholars Transit Hub <no-reply@divupstudio.online>',
                 to: [user.email],
-                subject: 'Your Account Role has been Updated',
+                subject: 'Your Scholars Transit Hub Account Role Has Been Updated',
                 html: renderEmailTemplate({
-                    title: "Role Updated",
+                    title: "Account Role Updated",
                     greetingName: user.name,
                     bodyHtml: `
-                      <p>Your system role at <strong>Scholars Transit Hub</strong> has been updated by an administrator.</p>
+                      <p>Your account role in <strong>Scholars Transit Hub</strong> has been updated by an administrator.</p>
                       <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                         <p style="margin: 0;">New Role: <span style="font-weight: bold; color: #5C60DB;">${body.role}</span></p>
                       </div>
-                      <p>If you have any questions about this change, please contact system support.</p>
+                      <p>If you have any questions about this change, please contact the system administrator.</p>
                     `,
                 }),
             });

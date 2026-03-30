@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
+import { getUserNoticeWhere } from "@/lib/notices"
 import { z } from "zod"
 
 const noticeSchema = z.object({
@@ -43,35 +44,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(notices)
     }
 
-    // User view: Filter by role, specific user, published, and not expired
-    const now = new Date()
+    // User view: show all published notices meant for this user, including expired ones
     const notices = await prisma.notice.findMany({
-        where: {
-            isPublished: true,
-            OR: [
-                { expiryDate: null },
-                { expiryDate: { gt: now } }
-            ],
-            AND: [
-                {
-                    OR: [
-                        { target: "ALL" },
-                        {
-                            AND: [
-                                { target: "ROLE" },
-                                { targetRoles: { has: user.role as any } }
-                            ]
-                        },
-                        {
-                            AND: [
-                                { target: "SPECIFIC" },
-                                { targetUsers: { has: user.id } }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
+        where: getUserNoticeWhere(user.id, user.role === "ADMIN" ? "ADMIN" : "USER"),
         orderBy: [
             { isPinned: 'desc' },
             { createdAt: 'desc' }

@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Avatar as AvatarPrimitive } from "radix-ui"
 
-import { cn } from "@/lib/utils"
+import { cn, getOptimizedImageUrl } from "@/lib/utils"
 
 function Avatar({
   className,
@@ -29,6 +29,9 @@ function AvatarImage({
   className,
   ...props
 }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+  const optimizedSrc =
+    typeof props.src === "string" ? getOptimizedImageUrl(props.src, 512) : props.src
+
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
@@ -37,6 +40,8 @@ function AvatarImage({
         className
       )}
       {...props}
+      referrerPolicy="no-referrer"
+      src={optimizedSrc}
     />
   )
 }

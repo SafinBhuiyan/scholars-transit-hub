@@ -174,7 +174,7 @@ export function ChartAreaInteractive() {
 
   return (
     <Card className="@container/card">
-      <CardHeader>
+      <CardHeader className="gap-3">
         <CardTitle>Total Visitors</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
@@ -182,7 +182,7 @@ export function ChartAreaInteractive() {
           </span>
           <span className="@[540px]/card:hidden">Last 3 months</span>
         </CardDescription>
-        <CardAction>
+        <CardAction className="col-start-1 row-start-3 w-full justify-self-stretch @[767px]/card:col-start-2 @[767px]/card:row-span-2 @[767px]/card:row-start-1 @[767px]/card:w-auto @[767px]/card:justify-self-end">
           <ToggleGroup
             type="single"
             value={timeRange}
@@ -196,7 +196,7 @@ export function ChartAreaInteractive() {
           </ToggleGroup>
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger
-              className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden"
+              className="flex w-full min-w-0 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden"
               size="sm"
               aria-label="Select a value"
             >
@@ -216,15 +216,15 @@ export function ChartAreaInteractive() {
           </Select>
         </CardAction>
       </CardHeader>
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+      <CardContent className="px-2 pt-2 sm:px-6 sm:pt-6">
         {isLoading ? (
-          <div className="flex aspect-auto h-[250px] w-full items-center justify-center text-muted-foreground">
+          <div className="flex aspect-auto h-[220px] w-full items-center justify-center text-muted-foreground sm:h-[250px]">
             Loading analytics...
           </div>
         ) : (
           <ChartContainer
             config={chartConfig}
-            className="aspect-auto h-[250px] w-full"
+            className="aspect-auto h-[220px] w-full sm:h-[250px]"
           >
             <AreaChart data={fetchedData}>
             <defs>

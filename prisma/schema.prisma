@@ -27,9 +27,48 @@ model User {
   noticesRead           UserNotice[]
   transportApplications TransportApplication[]
   filesDocsUploaded     FilesDoc[]
+  complaintsSubmitted   Complaint[]            @relation("ComplaintSubmitter")
+  complaintsManaged     Complaint[]            @relation("ComplaintManager")
 
   @@unique([email])
   @@map("user")
+}
+
+enum ComplaintType {
+  COMPLAINT
+  FEEDBACK
+  SUGGESTION
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+model Complaint {
+  id                String           @id @default(cuid())
+  userId            String
+  user              User             @relation("ComplaintSubmitter", fields: [userId], references: [id], onDelete: Cascade)
+  type              ComplaintType    @default(COMPLAINT)
+  status            ComplaintStatus  @default(OPEN)
+  subject           String
+  message           String           @db.Text
+  adminResponse     String?          @db.Text
+  statusUpdatedAt   DateTime?
+  statusUpdatedById String?
+  statusUpdatedBy   User?            @relation("ComplaintManager", fields: [statusUpdatedById], references: [id], onDelete: SetNull)
+  resolvedAt        DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([statusUpdatedById])
+  @@map("complaint")
 }
 
 model FilesDoc {

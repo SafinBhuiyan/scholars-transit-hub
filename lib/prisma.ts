@@ -20,7 +20,7 @@ let prisma = globalForPrisma.prisma || new PrismaClient({
 
 // Dynamic check for newly added models during development
 if (process.env.NODE_ENV !== 'production') {
-  const requiredModels = ["notice", "filesDoc", "filesDocCategory"] as const
+  const requiredModels = ["notice", "filesDoc", "filesDocCategory", "complaint"] as const
   const missingModels = requiredModels.filter((model) => !(prisma as any)[model])
 
   if (missingModels.length > 0) {

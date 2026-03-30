@@ -34,13 +34,15 @@ export function NavSecondary({
                   rel={item.url.startsWith("https://") ? "noopener noreferrer" : undefined}
                 >
                   <item.icon />
-                  <span>{item.title.includes("Builder") ? (
-                    <>
-                      {item.title.replace(" Builder", "")} <span className="underline font-bold">Builder</span>
-                    </>
-                  ) : (
-                    item.title
-                  )}</span>
+                  <span>
+                    {item.url === "https://safinbhuiyan.framer.website/" ? (
+                      <>
+                        Get Help from <span className="underline font-bold">Builder</span>
+                      </>
+                    ) : (
+                      item.title
+                    )}
+                  </span>
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>

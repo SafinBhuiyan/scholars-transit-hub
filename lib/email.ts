@@ -9,7 +9,7 @@ const appUrl =
   process.env.BETTER_AUTH_URL ||
   "http://divupstudio.online";
 
-const logoUrl = new URL("/logo/email-logo.png", appUrl).toString();
+const logoUrl = new URL("/logo/email-logo.svg", appUrl).toString();
 
 type EmailPayload = {
   from: string;
@@ -54,16 +54,16 @@ export function renderEmailTemplate({
   return `
     <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 600px; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 30px;">
-        <img src="${logoUrl}" alt="Scholars Transit Hub" style="height: 52px; width: auto;" />
+        <img src="${logoUrl}" alt="ScholarsPass" style="height: 52px; width: auto;" />
       </div>
       <h2 style="color: #5C60DB; text-align: center;">${title}</h2>
       <p style="margin-bottom: 16px;">Dear ${greetingName},</p>
       ${bodyHtml}
       ${emergencyContactHtml}
       <p style="font-size: 12px; color: #6b7280; margin-top: 20px;">
-        This is an automated message from Scholars Transit Hub. Please do not reply to this email.
+        This is an automated message from ScholarsPass. Please do not reply to this email.
       </p>
-      <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">&copy; ${new Date().getFullYear()} Scholars Transit Hub. All rights reserved.</p>
+      <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">&copy; ${new Date().getFullYear()} ScholarsPass. All rights reserved.</p>
     </div>
   `;
 }

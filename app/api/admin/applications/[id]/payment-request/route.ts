@@ -113,7 +113,7 @@ export async function POST(
 
         try {
             await sendEmail({
-                from: "Scholars Transit Hub <no-reply@divupstudio.online>",
+                from: "ScholarsPass <no-reply@divupstudio.online>",
                 to: [application.user.email],
                 subject: "Payment Request for Your Transport Pass Application",
                 html: renderEmailTemplate({

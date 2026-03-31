@@ -1,5 +1,11 @@
 {
- "name": "App",
+ "name": "ScholarsPass",
+ "short_name": "ScholarsPass",
+ "description": "Safe, reliable, scheduled commute between designated pickup points and campus.",
+ "start_url": "/",
+ "display": "standalone",
+ "background_color": "#ffffff",
+ "theme_color": "#ffffff",
  "icons": [
   {
    "src": "\/android-icon-36x36.png",

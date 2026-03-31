@@ -7,10 +7,16 @@ import { Analytics } from "@vercel/analytics/react";
 import { ExternalScripts } from "@/components/external-scripts";
 
 const figtree = Figtree({subsets:['latin'],variable:'--font-sans'});
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000"
+const siteTitle = "ScholarsPass"
+const siteDescription = "Safe, reliable, scheduled commute between designated pickup points and campus."
+const socialPreviewImage = "/logo/social-preview.png"
 
 export const metadata: Metadata = {
-  title: "Scholars Transit Hub",
-  description: "Safe, reliable, scheduled commute between designated pickup points and campus.",
+  metadataBase: new URL(siteUrl),
+  title: siteTitle,
+  description: siteDescription,
+  manifest: "/manifest.json",
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -28,12 +34,25 @@ export const metadata: Metadata = {
       { url: "/apple-icon-152x152.png", sizes: "152x152", type: "image/png" },
       { url: "/apple-icon-180x180.png", sizes: "180x180", type: "image/png" },
     ],
-    other: [
+  },
+  openGraph: {
+    title: siteTitle,
+    description: siteDescription,
+    url: "/",
+    siteName: siteTitle,
+    type: "website",
+    images: [
       {
-        rel: "manifest",
-        url: "/manifest.json",
+        url: socialPreviewImage,
+        alt: `${siteTitle} social preview`,
       },
     ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+    images: [socialPreviewImage],
   },
 };
 

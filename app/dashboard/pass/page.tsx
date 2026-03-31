@@ -24,7 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { formatDateShort } from "@/lib/utils"
+import { formatDateShort, formatTimeShort } from "@/lib/utils"
 import { getPassQrSvg, getPassState } from "@/lib/pass"
 import prisma from "@/lib/prisma"
 
@@ -32,21 +32,6 @@ function formatApplicantType(type: "STUDENT" | "ACADEMIC" | "ADMINISTRATIVE") {
   if (type === "STUDENT") return "Student"
   if (type === "ACADEMIC") return "Academic Staff"
   return "Administrative Staff"
-}
-
-function formatTimeLabel(time: string | null | undefined) {
-  if (!time) return "Not assigned"
-
-  const [hours, minutes] = time.split(":").map(Number)
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return time
-
-  const date = new Date()
-  date.setHours(hours, minutes, 0, 0)
-
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  })
 }
 
 export default async function StudentPassPage() {
@@ -223,11 +208,11 @@ export default async function StudentPassPage() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Morning trip</p>
-                    <p className="font-medium">{formatTimeLabel(application.route.startTime)}</p>
+                    <p className="font-medium">{formatTimeShort(application.route.startTime)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Return trip</p>
-                    <p className="font-medium">{formatTimeLabel(application.route.returnTime)}</p>
+                    <p className="font-medium">{formatTimeShort(application.route.returnTime)}</p>
                   </div>
                 </div>
               </div>

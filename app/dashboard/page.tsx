@@ -59,6 +59,35 @@ export default async function Page() {
     },
   })
 
+  const routes = await prisma.route.findMany({
+    where: {
+      isActive: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+    select: {
+      id: true,
+      name: true,
+      capacity: true,
+      startTime: true,
+      returnTime: true,
+      pickupPoints: {
+        where: {
+          isActive: true,
+        },
+        orderBy: {
+          order: "asc",
+        },
+        select: {
+          id: true,
+          name: true,
+          landmark: true,
+        },
+      },
+    },
+  })
+
   const latestSemester = await prisma.semester.findFirst({
     orderBy: {
       endDate: "desc",
@@ -68,7 +97,7 @@ export default async function Page() {
   const pass = application
     ? {
         ...getPassState(application),
-        qrCodeSvg: await getPassQrSvg(application, session.user.id, 164),
+        qrCodeSvg: await getPassQrSvg(application, session.user.id, 196),
       }
     : null
 
@@ -159,6 +188,7 @@ export default async function Page() {
           format: file.format,
           createdAt: file.createdAt.toISOString(),
         }))}
+        routes={routes}
       />
     </div>
   )

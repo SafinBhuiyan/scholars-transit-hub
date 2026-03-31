@@ -29,7 +29,7 @@ export function Logo({ className, ...props }: LogoProps) {
     >
       <Image
         src={src}
-        alt="Scholars Transit Hub"
+        alt="ScholarsPass"
         width={194}
         height={50}
         priority

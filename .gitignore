@@ -40,6 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# prisma
 /lib/generated/prisma
 .vscode
 bun.lock
+
+# local development files
+.codex
+openspec

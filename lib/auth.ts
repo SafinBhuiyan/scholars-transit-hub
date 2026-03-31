@@ -34,14 +34,14 @@ export const auth = betterAuth({
           const isPasswordReset = type === "forget-password";
 
           await sendEmail({
-            from: 'Scholars Transit Hub <no-reply@divupstudio.online>',
+            from: 'ScholarsPass <no-reply@divupstudio.online>',
             to: [email],
             subject: isPasswordReset
-              ? "Password Reset Code for Scholars Transit Hub"
-              : "Verify Your Scholars Transit Hub Email Address",
+              ? "Password Reset Code for ScholarsPass"
+              : "Verify Your ScholarsPass Email Address",
             text: isPasswordReset
-              ? `We received a request to reset your Scholars Transit Hub password. Your verification code is ${otp}. It expires in 10 minutes.`
-              : `Welcome to Scholars Transit Hub. Your email verification code is ${otp}. It expires in 10 minutes.`,
+              ? `We received a request to reset your ScholarsPass password. Your verification code is ${otp}. It expires in 10 minutes.`
+              : `Welcome to ScholarsPass. Your email verification code is ${otp}. It expires in 10 minutes.`,
             html: renderEmailTemplate({
               title: isPasswordReset ? "Password Reset Code" : "Email Verification Code",
               greetingName: name,

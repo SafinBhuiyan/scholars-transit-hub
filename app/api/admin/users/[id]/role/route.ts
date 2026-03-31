@@ -50,14 +50,14 @@ export async function PATCH(
         // Send email notification
         try {
             await sendEmail({
-                from: 'Scholars Transit Hub <no-reply@divupstudio.online>',
+                from: 'ScholarsPass <no-reply@divupstudio.online>',
                 to: [user.email],
-                subject: 'Your Scholars Transit Hub Account Role Has Been Updated',
+                subject: 'Your ScholarsPass Account Role Has Been Updated',
                 html: renderEmailTemplate({
                     title: "Account Role Updated",
                     greetingName: user.name,
                     bodyHtml: `
-                      <p>Your account role in <strong>Scholars Transit Hub</strong> has been updated by an administrator.</p>
+                      <p>Your account role in <strong>ScholarsPass</strong> has been updated by an administrator.</p>
                       <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                         <p style="margin: 0;">New Role: <span style="font-weight: bold; color: #5C60DB;">${body.role}</span></p>
                       </div>

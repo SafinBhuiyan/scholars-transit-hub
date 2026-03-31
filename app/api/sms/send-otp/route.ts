@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     })
 
     // Send OTP via SMS
-    const message = `Your Scholars Transit Hub verification code is ${otp}. It expires in 10 minutes.`
+    const message = `Your ScholarsPass verification code is ${otp}. It expires in 10 minutes.`
     const smsSent = await sendSMS(phone, message)
 
     // For development: return OTP in response if SMS fails

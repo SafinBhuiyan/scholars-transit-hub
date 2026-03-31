@@ -95,7 +95,7 @@ export async function sendComplaintCreatedEmails({
 
   const jobs: Promise<unknown>[] = [
     resendClient.emails.send({
-      from: "Scholars Transit Hub <no-reply@divupstudio.online>",
+      from: "ScholarsPass <no-reply@divupstudio.online>",
       to: [userEmail],
       subject: `We've received your ${getComplaintTypeLabel(type).toLowerCase()}`,
       text: `Your ${getComplaintTypeLabel(type).toLowerCase()} "${subject}" has been received. Reference ID: ${complaintId}.`,
@@ -119,7 +119,7 @@ export async function sendComplaintCreatedEmails({
   if (adminRecipients.length > 0) {
     jobs.push(
       resendClient.emails.send({
-        from: "Scholars Transit Hub <no-reply@divupstudio.online>",
+        from: "ScholarsPass <no-reply@divupstudio.online>",
         to: adminRecipients,
         subject: `New ${getComplaintTypeLabel(type)} submitted`,
         text: `A new ${getComplaintTypeLabel(type).toLowerCase()} was submitted by ${userName} (${userEmail}). Reference ID: ${complaintId}. Subject: ${subject}.`,
@@ -127,7 +127,7 @@ export async function sendComplaintCreatedEmails({
           title: `New ${getComplaintTypeLabel(type)}`,
           greetingName: "Transport Team",
           bodyHtml: `
-            <p>A new ${getComplaintTypeLabel(type).toLowerCase()} has been submitted through Scholars Transit Hub.</p>
+            <p>A new ${getComplaintTypeLabel(type).toLowerCase()} has been submitted through ScholarsPass.</p>
             <p><strong>Reference ID:</strong> ${safeComplaintId}</p>
             <p><strong>Submitted by:</strong> ${safeUserName} (${safeUserEmail})</p>
             <p><strong>Subject:</strong> ${safeSubject}</p>
@@ -169,7 +169,7 @@ export async function sendComplaintStatusEmail({
   const safeResponse = adminResponse ? escapeHtml(adminResponse) : null
 
   await resendClient.emails.send({
-    from: "Scholars Transit Hub <no-reply@divupstudio.online>",
+    from: "ScholarsPass <no-reply@divupstudio.online>",
     to: [userEmail],
     subject: `Update on your ${getComplaintTypeLabel(type).toLowerCase()}`,
     text: `Your ${getComplaintTypeLabel(type).toLowerCase()} "${subject}" is now ${getComplaintStatusLabel(status)}. Reference ID: ${complaintId}.${adminResponse ? ` Response: ${adminResponse}` : ""}`,

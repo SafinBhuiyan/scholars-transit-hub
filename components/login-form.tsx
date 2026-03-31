@@ -132,17 +132,13 @@ export function LoginForm({
           </form>
           <div className="bg-muted relative hidden md:block">
             <img
-              src="https://res.cloudinary.com/dweqw3mgx/image/upload/v1769303805/Frame_6_2_lkyhpm.png"
+              src="https://res.cloudinary.com/dweqw3mgx/image/upload/v1774948723/Frame_14_fdjewh.png"
               alt="Image"
-              className="absolute inset-0 h-full w-full object-cover brightness-50"
+              className="absolute inset-0 h-full w-full object-cover"
             />
           </div>
         </CardContent>
       </Card>
-      <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </FieldDescription>
     </div>
   )
 }

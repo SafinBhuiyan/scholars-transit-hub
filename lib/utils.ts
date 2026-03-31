@@ -12,6 +12,21 @@ export function formatDateShort(date: string | number | Date) {
   return format(d, "MMM d, yyyy")
 }
 
+export function formatTimeShort(time: string | null | undefined) {
+  if (!time) return "Not assigned"
+
+  const [hours, minutes] = time.split(":").map(Number)
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return time
+
+  const date = new Date()
+  date.setHours(hours, minutes, 0, 0)
+
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  })
+}
+
 export function getOptimizedImageUrl(src?: string | null, size = 512) {
   if (!src) return undefined
 

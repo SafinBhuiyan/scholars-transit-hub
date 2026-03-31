@@ -36,14 +36,14 @@ export async function PATCH(
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000"
             if (status === "REJECTED") {
                 await sendEmail({
-                    from: "Scholars Transit Hub <no-reply@divupstudio.online>",
+                    from: "ScholarsPass <no-reply@divupstudio.online>",
                     to: [application.user.email],
                     subject: "Update on Your Transport Pass Application",
                     html: renderEmailTemplate({
                         title: "Application Update",
                         greetingName: application.fullName,
                         bodyHtml: `
-                          <p>Thank you for your interest in the Scholars Transit Hub transport service.</p>
+                          <p>Thank you for your interest in the ScholarsPass transport service.</p>
                           <p>After review, we are unable to approve your application at this time.</p>
                           ${reason ? `<div style="background: #fef2f2; padding: 16px; border-radius: 8px; margin: 16px 0;">
                             <p style="margin: 0; color: #b91c1c;"><strong>Review note:</strong> ${reason}</p>
@@ -59,7 +59,7 @@ export async function PATCH(
 
             if (status === "WAITLIST") {
                 await sendEmail({
-                    from: "Scholars Transit Hub <no-reply@divupstudio.online>",
+                    from: "ScholarsPass <no-reply@divupstudio.online>",
                     to: [application.user.email],
                     subject: "Your Transport Pass Application Is on the Waitlist",
                     html: renderEmailTemplate({

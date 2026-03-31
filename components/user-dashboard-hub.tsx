@@ -6,10 +6,13 @@ import Link from "next/link"
 import {
   IconBell,
   IconCalendar,
+  IconClock,
   IconEye,
   IconId,
   IconFileDescription,
+  IconMapPin,
   IconPinned,
+  IconRoute,
   IconUsers,
 } from "@tabler/icons-react"
 
@@ -19,7 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatDateShort } from "@/lib/utils"
+import { formatDateShort, formatTimeShort } from "@/lib/utils"
 
 const PdfPreview = dynamic(() => import("@/components/pdf-preview").then((mod) => mod.PdfPreview), {
   ssr: false,
@@ -70,6 +73,19 @@ type DashboardPass = {
   studentMeta: string | null
 }
 
+type DashboardRoute = {
+  id: string
+  name: string
+  capacity: number
+  startTime: string
+  returnTime: string
+  pickupPoints: Array<{
+    id: string
+    name: string
+    landmark: string | null
+  }>
+}
+
 function getNoticeTone(type: DashboardNotice["type"]) {
   if (type === "SUCCESS") return "bg-primary/10 text-primary border-primary/20"
   if (type === "WARNING") return "bg-amber-500/10 text-amber-700 border-amber-500/20"
@@ -81,10 +97,12 @@ export function UserDashboardHub({
   notices,
   files,
   pass,
+  routes,
 }: {
   notices: DashboardNotice[]
   files: DashboardFile[]
   pass: DashboardPass | null
+  routes: DashboardRoute[]
 }) {
   const [selectedNotice, setSelectedNotice] = React.useState<DashboardNotice | null>(null)
   const [selectedFile, setSelectedFile] = React.useState<DashboardFile | null>(null)
@@ -93,7 +111,7 @@ export function UserDashboardHub({
     <div className="grid gap-6">
       {pass ? (
         <section className="grid gap-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <h2 className="text-xl font-semibold tracking-tight">Pass QR</h2>
               <p className="text-sm text-muted-foreground">Quick access to your transport pass verification code.</p>
@@ -105,31 +123,31 @@ export function UserDashboardHub({
 
           <Card>
             <CardContent className="py-6">
-              <div className="grid gap-6 lg:grid-cols-[168px_minmax(0,1fr)]">
-                <div className="flex justify-center lg:justify-start">
-                  <div className="inline-flex rounded-xl border bg-white p-3 shadow-sm">
+              <div className="grid gap-6 lg:grid-cols-[204px_minmax(0,820px)] lg:items-start lg:justify-start">
+                <div className="flex items-start justify-center lg:justify-start">
+                  <div className="inline-flex self-start rounded-xl border bg-white p-2 shadow-sm">
                     {pass.qrCodeSvg ? (
                       <div
-                        className="h-140px w-140px shrink-0 [&_svg]:block [&_svg]:h-full [&_svg]:w-full"
+                        className="h-[188px] w-[188px] shrink-0 overflow-hidden [&_svg]:block [&_svg]:h-full [&_svg]:w-full"
                         dangerouslySetInnerHTML={{ __html: pass.qrCodeSvg }}
                       />
                     ) : (
-                      <div className="flex h-140px w-140px items-center justify-center rounded-lg border border-dashed bg-muted/30 px-4 text-center text-xs text-muted-foreground">
+                      <div className="flex h-[188px] w-[188px] items-center justify-center rounded-lg border border-dashed bg-muted/30 px-4 text-center text-xs text-muted-foreground">
                         QR will be available once your pass becomes active.
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="min-w-0 space-y-4 text-center lg:text-left">
+                <div className="min-w-0 space-y-4 text-center lg:max-w-[820px] lg:text-left">
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
                       <Badge variant="outline" className={pass.isActive ? "bg-primary/10 text-primary border-primary/20" : ""}>
                         {pass.isActive ? "Active Pass" : "Pass Pending"}
                       </Badge>
-                      <Badge variant="outline">
-                        <IconId className="mr-1 h-3 w-3" />
-                        {pass.passId}
+                      <Badge variant="outline" className="max-w-full">
+                        <IconId className="mr-1 h-3 w-3 shrink-0" />
+                        <span className="break-all">{pass.passId}</span>
                       </Badge>
                     </div>
 
@@ -164,18 +182,106 @@ export function UserDashboardHub({
                       <p className="mt-1 font-medium">{pass.expiresOn}</p>
                     </div>
                   </div>
-
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      Show this QR during pass verification or open the full pass page for the complete pass details.
-                    </p>
-                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </section>
       ) : null}
+
+      <section className="grid gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold tracking-tight">Available Routes</h2>
+            <p className="text-sm text-muted-foreground">Browse active routes, trip times, and pickup points before you apply.</p>
+          </div>
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/apply">Apply Now</Link>
+          </Button>
+        </div>
+
+        {routes.length === 0 ? (
+          <Card>
+            <CardContent className="flex items-center gap-3 py-8">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                <IconRoute className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium">No active routes available</p>
+                <p className="text-sm text-muted-foreground">Transport routes and pickup points will appear here once the admin publishes them.</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {routes.map((route) => (
+              <Card key={route.id} className="min-w-0">
+                <CardHeader className="gap-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <CardTitle className="text-base leading-snug">{route.name}</CardTitle>
+                      <CardDescription>{route.capacity} seats available on this route</CardDescription>
+                    </div>
+                    <Badge variant="outline" className="shrink-0">
+                      {route.pickupPoints.length} stops
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border bg-muted/20 p-3">
+                      <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <IconClock className="h-3 w-3" />
+                        Morning trip
+                      </p>
+                      <p className="mt-1 font-medium">{formatTimeShort(route.startTime)}</p>
+                    </div>
+                    <div className="rounded-lg border bg-muted/20 p-3">
+                      <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <IconClock className="h-3 w-3" />
+                        Return trip
+                      </p>
+                      <p className="mt-1 font-medium">{formatTimeShort(route.returnTime)}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="inline-flex items-center gap-2 text-sm font-medium">
+                      <IconMapPin className="h-4 w-4 text-muted-foreground" />
+                      Pickup points
+                    </p>
+
+                    {route.pickupPoints.length === 0 ? (
+                      <div className="rounded-lg border border-dashed bg-muted/10 p-3 text-sm text-muted-foreground">
+                        No pickup points have been added to this route yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {route.pickupPoints.map((pickupPoint, index) => (
+                          <div
+                            key={pickupPoint.id}
+                            className="flex items-start gap-3 rounded-lg border bg-background p-3"
+                          >
+                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                              {index + 1}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium leading-snug">{pickupPoint.name}</p>
+                              {pickupPoint.landmark ? (
+                                <p className="text-sm text-muted-foreground">{pickupPoint.landmark}</p>
+                              ) : null}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="grid gap-4">
         <div className="flex items-center justify-between gap-3">

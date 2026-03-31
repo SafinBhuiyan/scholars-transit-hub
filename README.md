@@ -1,6 +1,6 @@
-# Scholars Transit Hub
+# ScholarsPass
 
-Scholars Transit Hub is a university transport management platform built with Next.js. It supports student and staff onboarding, transport pass applications, admin review workflows, route and pickup-point management, notices, file/document management, and payment collection for student transport passes.
+ScholarsPass is a university transport management platform built with Next.js. It supports student and staff onboarding, transport pass applications, admin review workflows, route and pickup-point management, notices, file/document management, and payment collection for student transport passes.
 
 ## What This Project Does
 

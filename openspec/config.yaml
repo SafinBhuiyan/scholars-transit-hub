@@ -1,0 +1,82 @@
+schema: spec-driven
+
+context: |
+  Project: ScholarsPass (University of Scholars Transport Pass Management System)
+
+  Tech Stack:
+  - Next.js (App Router)
+  - React 19
+  - TypeScript
+  - Tailwind CSS + shadcn/ui + Radix UI
+  - Prisma ORM
+  - PostgreSQL (Neon)
+  - Better Auth (authentication)
+  - UddoktaPay (payment integration)
+  - Resend (email service)
+  - MRAM SMS API (OTP verification)
+
+  Conventions:
+  - Use clean, modular, and scalable architecture
+  - Follow component-based UI design
+  - Prefer server actions / API routes for business logic
+  - Maintain clear separation between UI, logic, and data layers
+  - Use consistent naming (camelCase for variables, PascalCase for components)
+  - Avoid unnecessary complexity; prioritize readability and maintainability
+
+  Domain:
+  - University transport management system
+  - Roles: STUDENT, ADMIN
+  - Core flow: Application → Approval → Payment (students only) → Pass generation → Verification
+  - Admin controls routes, pickup points, applications, payments, notices, and documents
+  - Students apply, pay, and use QR-based passes
+  - Academics/Admin users do not require payment
+
+rules:
+  proposal:
+    - Keep proposals clear, structured, and under 500 words
+    - Always include: Problem, Solution, Core Features, and Impact
+    - Avoid generic language; align with ScholarsPass domain
+    - Focus on real-world usability and system flow
+
+  tasks:
+    - Break tasks into small actionable chunks (max 2 hours)
+    - Prioritize core flow: application → approval → payment → pass
+    - Clearly define expected output for each task
+    - Avoid vague tasks like "improve UI"
+
+  ui:
+    - Maintain clean, minimal dashboard design
+    - Ensure consistency across tables, modals, and cards
+    - Use shadcn/ui components wherever possible
+    - Prioritize usability over visual complexity
+    - Design should be mobile-responsive
+
+  backend:
+    - Keep APIs RESTful and predictable
+    - Validate all inputs (especially payments and user data)
+    - Ensure role-based access control in every endpoint
+    - Keep business logic separate from route handlers
+
+  database:
+    - Use normalized schema design
+    - Keep relations clear (Users, Applications, Routes, Payments, Passes)
+    - Avoid redundant fields
+    - Ensure scalability for future analytics
+
+  payments:
+    - Admin defines payment amount
+    - Only students require payment
+    - Always verify payment via webhook or verify endpoint
+    - Never trust client-side payment confirmation
+    - Update application status only after verified payment
+
+  security:
+    - Enforce authentication on all protected routes
+    - Use role-based authorization checks
+    - Sanitize inputs and protect against common vulnerabilities
+    - Do not expose sensitive keys in frontend
+
+  docs:
+    - Keep documentation concise and structured
+    - Use real project terminology (ScholarsPass, not generic terms)
+    - Update docs when system flow changes

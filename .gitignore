@@ -46,5 +46,6 @@ next-env.d.ts
 bun.lock
 
 # local development files
-.codex
-openspec
+# .codex
+# openspec
+# .overview

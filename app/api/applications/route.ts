@@ -79,6 +79,14 @@ export async function POST(request: Request) {
             }
         })
 
+        await prisma.notification.create({
+            data: {
+                userId: session.user.id,
+                title: "Application Submitted",
+                message: "Your transport application has been received.",
+            },
+        })
+
         return NextResponse.json({ application }, { status: 201 })
     } catch (error) {
         console.error("Error creating application:", error)

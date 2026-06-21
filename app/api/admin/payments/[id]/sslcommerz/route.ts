@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
-import { verifyPayment } from "@/lib/uddoktapay"
+import { queryPaymentByTransactionId } from "@/lib/sslcommerz"
 
 export async function GET(
   request: Request,
@@ -32,10 +32,10 @@ export async function GET(
       )
     }
 
-    const result = await verifyPayment(payment.invoiceId)
+    const result = await queryPaymentByTransactionId(payment.invoiceId)
     return NextResponse.json(result)
   } catch (error) {
-    console.error("Failed to fetch UddoktaPay details:", error)
-    return NextResponse.json({ error: "Failed to fetch UddoktaPay details" }, { status: 500 })
+    console.error("Failed to fetch SSLCommerz details:", error)
+    return NextResponse.json({ error: "Failed to fetch SSLCommerz details" }, { status: 500 })
   }
 }

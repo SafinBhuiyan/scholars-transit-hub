@@ -10,7 +10,6 @@ export default async function AdminDashboardPage() {
     totalRevenue,
     totalUsers,
     approvedApplications,
-    semesters,
     applications
   ] = await Promise.all([
     prisma.transportApplication.count(),
@@ -23,9 +22,6 @@ export default async function AdminDashboardPage() {
     prisma.transportApplication.findMany({
       where: { status: "APPROVED" },
       select: { routeId: true },
-    }),
-    prisma.semester.findMany({
-      orderBy: { startDate: "desc" },
     }),
     prisma.transportApplication.findMany({
       take: 10,
@@ -110,12 +106,6 @@ export default async function AdminDashboardPage() {
       <ApplicationsTable
         hideToolbar={true}
         data={formattedApplications}
-        semesters={semesters.map((semester) => ({
-          id: semester.id,
-          name: semester.name,
-          startDate: semester.startDate.toISOString(),
-          endDate: semester.endDate.toISOString(),
-        }))}
       />
     </div>
   )

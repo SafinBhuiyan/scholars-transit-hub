@@ -1,47 +1,41 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
-import { 
-  IconBell, 
-  IconInfoCircle, 
-  IconAlertTriangle, 
-  IconCircleCheck, 
-  IconAlertCircle, 
-  IconPinned,
-  IconCircleFilled
-} from "@tabler/icons-react"
+import { IconBell, IconCircleFilled } from "@tabler/icons-react"
+
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { cn, formatDateShort } from "@/lib/utils"
-import Link from "next/link"
-import { authClient } from "@/lib/auth-client"
+
+type Notification = {
+  id: string
+  title: string
+  message: string
+  isRead: boolean
+  createdAt: string
+}
 
 export function NotificationBell() {
-  const { data: session } = authClient.useSession()
-  const [notices, setNotices] = React.useState<any[]>([])
+  const [notifications, setNotifications] = React.useState<Notification[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
+  const [pendingReadId, setPendingReadId] = React.useState<string | null>(null)
 
-  const noticesPath = React.useMemo(() => {
-    if (session?.user?.role === "ADMIN") return "/admin/dashboard/notices"
-    return "/dashboard/notices"
-  }, [session?.user?.role])
+  const unreadCount = notifications.filter((notification) => !notification.isRead).length
 
-  const unreadCount = notices.filter(n => !n.isRead).length
-
-  const fetchNotices = async () => {
+  const fetchNotifications = async () => {
     try {
-      const res = await fetch("/api/notices")
-      if (res.ok) {
-        const data = await res.json()
-        setNotices(data)
-      }
+      const response = await fetch("/api/notifications", { cache: "no-store" })
+      if (!response.ok) return
+
+      const data = await response.json()
+      setNotifications(data.notifications || [])
     } catch {
     } finally {
       setIsLoading(false)
@@ -49,101 +43,121 @@ export function NotificationBell() {
   }
 
   React.useEffect(() => {
-    fetchNotices()
-    // Optional: Polling every 5 minutes
-    const interval = setInterval(fetchNotices, 5 * 60 * 1000)
+    fetchNotifications()
+
+    const interval = setInterval(fetchNotifications, 60 * 1000)
     return () => clearInterval(interval)
   }, [])
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = async (notification: Notification) => {
+    if (notification.isRead || pendingReadId) return
+
+    setPendingReadId(notification.id)
     try {
-      const res = await fetch(`/api/notices/${id}/read`, { method: "POST" })
-      if (res.ok) {
-        setNotices(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
-      }
+      const response = await fetch(`/api/notifications/${notification.id}/read`, {
+        method: "PATCH",
+      })
+
+      if (!response.ok) return
+
+      setNotifications((prev) =>
+        prev.map((item) =>
+          item.id === notification.id ? { ...item, isRead: true } : item
+        )
+      )
     } catch {
+    } finally {
+      setPendingReadId(null)
     }
   }
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "INFO": return <IconInfoCircle className="h-4 w-4 text-blue-500" />
-      case "WARNING": return <IconAlertTriangle className="h-4 w-4 text-orange-500" />
-      case "SUCCESS": return <IconCircleCheck className="h-4 w-4 text-green-500" />
-      case "DANGER": return <IconAlertCircle className="h-4 w-4 text-red-500" />
-      default: return <IconInfoCircle className="h-4 w-4 text-gray-500" />
-    }
+  const formatTimestamp = (createdAt: string) => {
+    const date = new Date(createdAt)
+    return `${formatDateShort(date)} ${date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })}`
   }
 
   return (
-    <DropdownMenu onOpenChange={(open) => { if (open) fetchNotices() }}>
+    <DropdownMenu
+      onOpenChange={(open) => {
+        if (!open) return
+        setIsLoading(true)
+        fetchNotifications()
+      }}
+    >
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="relative h-8 gap-2 px-3">
+        <Button variant="outline" size="icon" className="relative h-8 w-8">
           <IconBell className="h-4 w-4" />
-          <span>Notifications</span>
-          {unreadCount > 0 && (
-            <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground animate-in zoom-in">
+          <span className="sr-only">Open notifications</span>
+          {unreadCount > 0 ? (
+            <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
-          )}
+          ) : null}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[380px] p-0">
-        <DropdownMenuLabel className="p-4 flex items-center justify-between">
-          <span className="font-bold">Notifications</span>
-          {unreadCount > 0 && (
-            <Badge variant="secondary" className="text-[10px] h-5">
-              {unreadCount} Unread
+
+      <DropdownMenuContent align="end" className="w-[360px] p-0">
+        <DropdownMenuLabel className="flex items-center justify-between p-4">
+          <span className="font-semibold">Notifications</span>
+          {unreadCount > 0 ? (
+            <Badge variant="secondary" className="h-5 text-[10px]">
+              {unreadCount} unread
             </Badge>
-          )}
+          ) : null}
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="m-0" />
-        <div className="max-h-[400px] overflow-y-auto">
+
+        <div className="max-h-[380px] overflow-y-auto">
           {isLoading ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
               Loading notifications...
             </div>
-          ) : notices.length === 0 ? (
+          ) : notifications.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
               No notifications yet.
             </div>
           ) : (
-            notices.map((notice) => (
-              <div 
-                key={notice.id} 
+            notifications.map((notification) => (
+              <button
+                key={notification.id}
+                type="button"
                 className={cn(
-                  "flex flex-col gap-1 p-4 transition-colors hover:bg-muted/50 cursor-pointer relative",
-                  !notice.isRead && "bg-muted/20"
+                  "relative flex w-full flex-col gap-1 border-b border-border/60 p-4 text-left transition-colors hover:bg-muted/50",
+                  !notification.isRead && "bg-muted/20"
                 )}
-                onClick={() => markAsRead(notice.id)}
+                onClick={() => markAsRead(notification)}
               >
-                {!notice.isRead && (
-                    <IconCircleFilled className="absolute top-4 right-4 h-2 w-2 text-primary" />
-                )}
-                <div className="flex items-center gap-2">
-                  {getTypeIcon(notice.type)}
-                  <span className={cn("text-sm font-semibold leading-none", !notice.isRead && "text-foreground")}>
-                    {notice.title}
-                  </span>
-                  {notice.isPinned && <IconPinned className="h-3 w-3 text-muted-foreground" />}
+                {!notification.isRead ? (
+                  <IconCircleFilled className="absolute right-4 top-4 h-2 w-2 text-primary" />
+                ) : null}
+
+                <div className="flex items-center gap-2 pr-4">
+                  <span className="text-sm font-medium">{notification.title}</span>
+                  {!notification.isRead ? (
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                      New
+                    </Badge>
+                  ) : null}
                 </div>
-                <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                  {notice.content}
+
+                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                  {notification.message}
                 </p>
-                <span className="text-[10px] text-muted-foreground mt-1">
-                    {formatDateShort(notice.createdAt)} • {new Date(notice.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+
+                <span className="mt-1 text-[10px] text-muted-foreground">
+                  {formatTimestamp(notification.createdAt)}
                 </span>
-              </div>
+
+                {pendingReadId === notification.id ? (
+                  <span className="text-[10px] text-muted-foreground">Marking as read...</span>
+                ) : null}
+              </button>
             ))
           )}
-        </div>
-        <DropdownMenuSeparator className="m-0" />
-        <div className="p-3 bg-muted/20 border-t">
-            <Link href={noticesPath} className="block w-full">
-                <Button variant="outline" size="sm" className="w-full text-xs font-semibold shadow-sm hover:bg-background">
-                    View all notices
-                </Button>
-            </Link>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -11,7 +11,6 @@ import {
   IconSearch,
   IconSelector,
   IconX,
-  IconCreditCard,
   IconId,
   IconEye,
   IconClock,
@@ -90,7 +89,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { formatDateShort } from "@/lib/utils"
 
 export const applicationSchema = z.object({
   id: z.string(),
@@ -113,20 +111,11 @@ export const applicationSchema = z.object({
 
 export type Application = z.infer<typeof applicationSchema>
 
-type SemesterOption = {
-  id: string
-  name: string
-  startDate: string
-  endDate: string
-}
-
 export function ApplicationsTable({
   data,
-  semesters,
   hideToolbar = false,
 }: {
   data: Application[]
-  semesters: SemesterOption[]
   hideToolbar?: boolean
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -143,14 +132,6 @@ export function ApplicationsTable({
   const [isUpdating, setIsUpdating] = React.useState(false)
   const [rejectionReason, setRejectionReason] = React.useState("")
   const searchRef = React.useRef<HTMLInputElement>(null)
-
-  // Payment Request Dialog State
-  const [paymentOpen, setPaymentOpen] = React.useState(false)
-  const [paymentApplication, setPaymentApplication] = React.useState<Application | null>(null)
-  const [semesterId, setSemesterId] = React.useState("")
-  const [amount, setAmount] = React.useState("")
-  const [isSendingPayment, setIsSendingPayment] = React.useState(false)
-  const hasSemesters = semesters.length > 0
 
   // Quick View Sheet State
   const [quickViewOpen, setQuickViewOpen] = React.useState(false)
@@ -204,50 +185,6 @@ export function ApplicationsTable({
     } finally {
       setIsUpdating(false)
     }
-  }
-
-  const handlePaymentRequestInitiate = (application: Application) => {
-    setPaymentApplication(application)
-    setSemesterId("")
-    setAmount("")
-    setPaymentOpen(true)
-  }
-
-  const handleSendPaymentRequest = async () => {
-    if (!paymentApplication || !semesterId || !amount) {
-      toast.error("Please fill in all fields")
-      return
-    }
-
-    setIsSendingPayment(true)
-    try {
-      const response = await fetch(`/api/admin/applications/${paymentApplication.id}/payment-request`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ semesterId, amount: parseFloat(amount) }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to send payment request")
-      }
-
-      toast.success("Payment request sent successfully")
-      setPaymentOpen(false)
-      setSemesterId("")
-      setAmount("")
-    } catch (error) {
-      toast.error("Something went wrong. Please try again.")
-    } finally {
-      setIsSendingPayment(false)
-    }
-  }
-
-  const formatSemesterRange = (startDate: string, endDate: string) => {
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-    return `${formatDateShort(start)} - ${formatDateShort(end)}`
   }
 
   const handleQuickView = (application: Application) => {
@@ -433,10 +370,6 @@ export function ApplicationsTable({
                   <Command>
                     <CommandList>
                       <CommandGroup>
-                        <CommandItem onSelect={() => handlePaymentRequestInitiate(application)}>
-                          <IconCreditCard className="mr-2 h-4 w-4" />
-                          Send Payment Request
-                        </CommandItem>
                         <CommandItem onSelect={() => handleStatusChangeInitiate(application, "REJECTED")}>
                           <IconX className="mr-2 h-4 w-4" />
                           Reject Pass & Application
@@ -476,10 +409,6 @@ export function ApplicationsTable({
                 <Command>
                   <CommandList>
                     <CommandGroup>
-                      <CommandItem onSelect={() => handlePaymentRequestInitiate(application)} disabled>
-                        <IconCreditCard className="mr-2 h-4 w-4" />
-                        Send Payment Request
-                      </CommandItem>
                       <CommandItem onSelect={() => handleStatusChangeInitiate(application, "WAITLIST")}>
                         <IconClock className="mr-2 h-4 w-4" />
                         Set to Wishlist
@@ -715,7 +644,7 @@ export function ApplicationsTable({
           <DialogHeader>
             <DialogTitle>Change Application Status</DialogTitle>
             <DialogDescription>
-              You are changing this application's status. This will immediately affect the applicant's transport pass access.
+              You are changing this application status. This will immediately affect the applicant transport pass access.
             </DialogDescription>
           </DialogHeader>
 
@@ -760,75 +689,6 @@ export function ApplicationsTable({
             <Button onClick={handleConfirmStatusChange} disabled={isUpdating} className="gap-2">
               {isUpdating && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
               Confirm Change
-              <Kbd>↵</Kbd>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Payment Request Dialog */}
-      <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Send Payment Request</DialogTitle>
-            <DialogDescription>
-              Send a payment request to the applicant for their transport pass.
-            </DialogDescription>
-          </DialogHeader>
-
-          {paymentApplication && (
-            <div className="py-4 space-y-4">
-              <div className="flex flex-col gap-2 p-4 border rounded-md bg-muted/50">
-                <span className="text-sm font-medium">Applicant: {paymentApplication.fullName}</span>
-                <span className="text-sm text-muted-foreground">Student ID: {paymentApplication.studentId || "N/A"}</span>
-                <span className="text-sm text-muted-foreground">Route: {paymentApplication.routeName}</span>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="semester">Semester</Label>
-                <Select value={semesterId} onValueChange={setSemesterId}>
-                  <SelectTrigger id="semester" className="w-full">
-                    <SelectValue placeholder="Select semester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {hasSemesters ? (
-                      semesters.map((option) => (
-                        <SelectItem key={option.id} value={option.id}>
-                          {option.name} ({formatSemesterRange(option.startDate, option.endDate)})
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-semesters" disabled>
-                        No semesters yet. Add one in Settings.
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (BDT)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPaymentOpen(false)} disabled={isSendingPayment} className="gap-2">
-              Cancel
-              <Kbd>Esc</Kbd>
-            </Button>
-            <Button onClick={handleSendPaymentRequest} disabled={isSendingPayment} className="gap-2">
-              {isSendingPayment && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
-              Send Request
               <Kbd>↵</Kbd>
             </Button>
           </DialogFooter>
@@ -940,19 +800,6 @@ export function ApplicationsTable({
                       Reject Pass & Application
                     </Button>
                   </div>
-                )}
-
-                {quickViewApplication.status === "APPROVED" && (
-                  <Button
-                    className="w-full"
-                    onClick={() => {
-                      setQuickViewOpen(false)
-                      handlePaymentRequestInitiate(quickViewApplication)
-                    }}
-                  >
-                    <IconCreditCard className="mr-2 h-4 w-4" />
-                    Send Payment Request
-                  </Button>
                 )}
 
                 {quickViewApplication.status === "REJECTED" && (

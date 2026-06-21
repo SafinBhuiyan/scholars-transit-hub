@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { verifyPayment } from "@/lib/uddoktapay";
+import { queryPaymentByTransactionId } from "@/lib/sslcommerz";
+
+function getErrorMessage(error: unknown, fallback: string) {
+    return error instanceof Error ? error.message : fallback;
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -43,49 +47,55 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Verify payment with UddoktaPay
-        const verifyResponse = await verifyPayment(invoiceId);
+        const verifyResponse = await queryPaymentByTransactionId(invoiceId);
+        const paymentData = verifyResponse.element?.[0];
 
-        if (!verifyResponse.status || !verifyResponse.data) {
+        if (verifyResponse.APIConnect !== "DONE" || !paymentData) {
             return NextResponse.json({
                 success: false,
-                message: verifyResponse.message || "Payment verification failed",
+                message: "Payment verification failed",
                 status: "PENDING",
             });
         }
 
-        const paymentData = verifyResponse.data;
+        const gatewayStatus = paymentData.status?.toUpperCase();
+        const nextStatus = gatewayStatus === "VALID" || gatewayStatus === "VALIDATED"
+            ? "PAID"
+            : gatewayStatus === "FAILED"
+                ? "FAILED"
+                : "PENDING";
 
-        // Determine payment method from UddoktaPay response
-        let paymentMethod: "BKASH" | "NAGAD" | "ROCKET" | "CARD" | null = null;
-        if (paymentData.payment_method) {
-            const method = paymentData.payment_method.toUpperCase();
-            if (["BKASH", "NAGAD", "ROCKET", "CARD"].includes(method)) {
-                paymentMethod = method as any;
-            }
-        }
-
-        // Update payment status
+        const wasPaid = payment.status === "PAID";
         const updatedPayment = await prisma.payment.update({
             where: { id: payment.id },
             data: {
-                status: paymentData.status === "COMPLETED" ? "PAID" : "PENDING",
-                transactionId: paymentData.transaction_id,
-                method: paymentMethod,
-                senderNumber: paymentData.sender_number,
-                paidAt: paymentData.status === "COMPLETED" ? new Date(paymentData.date) : null,
+                status: nextStatus,
+                transactionId: paymentData.bank_tran_id || paymentData.val_id || null,
+                method: paymentData.card_type ? "CARD" : null,
+                senderNumber: null,
+                paidAt: nextStatus === "PAID" && paymentData.tran_date ? new Date(paymentData.tran_date) : null,
             },
         });
+
+        if (nextStatus === "PAID" && !wasPaid) {
+            await prisma.notification.create({
+                data: {
+                    userId: payment.application.userId,
+                    title: "Payment Successful",
+                    message: "Your transport pass is now active.",
+                },
+            });
+        }
 
         return NextResponse.json({
             success: true,
             payment: updatedPayment,
             status: updatedPayment.status,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Failed to verify payment:", error);
         return NextResponse.json(
-            { error: error.message || "Failed to verify payment" },
+            { error: getErrorMessage(error, "Failed to verify payment") },
             { status: 500 }
         );
     }

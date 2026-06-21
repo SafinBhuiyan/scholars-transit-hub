@@ -13,9 +13,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const q = searchParams.get("q")?.trim() || ""
 
-  const where = q
+  const searchFilter = q
     ? {
-        status: "APPROVED" as const,
         OR: [
           { id: { contains: q, mode: "insensitive" as const } },
           { fullName: { contains: q, mode: "insensitive" as const } },
@@ -24,9 +23,27 @@ export async function GET(req: NextRequest) {
           { studentId: { contains: q, mode: "insensitive" as const } },
         ],
       }
-    : {
-        status: "APPROVED" as const,
-      }
+    : {}
+
+  const where = {
+    status: "APPROVED" as const,
+    AND: [
+      searchFilter,
+      {
+        OR: [
+          { applicantType: { not: "STUDENT" as const } },
+          {
+            applicantType: "STUDENT" as const,
+            payments: {
+              some: {
+                status: "PAID" as const,
+              },
+            },
+          },
+        ],
+      },
+    ],
+  }
 
   const applications = await prisma.transportApplication.findMany({
     where,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { generateInvoiceNumber } from "@/lib/sslcommerz";
 
 export async function POST(request: NextRequest) {
     try {
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
             data: {
                 applicationId,
                 amount: parseFloat(amount),
+                invoiceNumber: generateInvoiceNumber(applicationId),
                 notes,
                 status: "PENDING",
             },

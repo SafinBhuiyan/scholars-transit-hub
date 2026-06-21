@@ -33,12 +33,6 @@ export default async function ApplicationsPage() {
     },
   })
 
-  const semesters = await prisma.semester.findMany({
-    orderBy: {
-      startDate: "desc",
-    },
-  })
-
   const formattedApplications = applications.map((application) => {
     const pickupPoint = application.route.pickupPoints.find(
       (point) => point.id === application.pickupPointId
@@ -72,12 +66,6 @@ export default async function ApplicationsPage() {
     <div className="flex flex-1 flex-col gap-6">
       <ApplicationsTable
         data={formattedApplications}
-        semesters={semesters.map((semester) => ({
-          id: semester.id,
-          name: semester.name,
-          startDate: semester.startDate.toISOString(),
-          endDate: semester.endDate.toISOString(),
-        }))}
       />
     </div>
   )

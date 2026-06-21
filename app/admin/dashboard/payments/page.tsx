@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma"
 import { PaymentsTable } from "@/components/payments-table"
-import { verifyPayment } from "@/lib/uddoktapay"
+import { queryPaymentByTransactionId } from "@/lib/sslcommerz"
 
 export default async function PaymentsPage() {
   const pendingWithInvoice = await prisma.payment.findMany({
@@ -18,29 +18,24 @@ export default async function PaymentsPage() {
   for (const payment of pendingWithInvoice) {
     try {
       if (!payment.invoiceId) continue
-      const result = await verifyPayment(payment.invoiceId)
-      const gatewayStatus = result.data?.status?.toUpperCase()
+      const result = await queryPaymentByTransactionId(payment.invoiceId)
+      const gatewayPayment = result.element?.[0]
+      const gatewayStatus = gatewayPayment?.status?.toUpperCase()
 
       let nextStatus: "PENDING" | "PAID" | "FAILED" = "PENDING"
-      if (gatewayStatus === "COMPLETED") nextStatus = "PAID"
+      if (gatewayStatus === "VALID" || gatewayStatus === "VALIDATED") nextStatus = "PAID"
       if (gatewayStatus === "FAILED") nextStatus = "FAILED"
 
-      let paymentMethod: "BKASH" | "NAGAD" | "ROCKET" | "CARD" | "BANK_TRANSFER" | null = null
-      if (result.data?.payment_method) {
-        const method = result.data.payment_method.toUpperCase()
-        if (["BKASH", "NAGAD", "ROCKET", "CARD", "BANK_TRANSFER"].includes(method)) {
-          paymentMethod = method as any
-        }
-      }
+      const paymentMethod = gatewayPayment?.card_type ? "CARD" : null
 
       await prisma.payment.update({
         where: { id: payment.id },
         data: {
           status: nextStatus,
-          transactionId: result.data?.transaction_id || null,
+          transactionId: gatewayPayment?.bank_tran_id || gatewayPayment?.val_id || null,
           method: paymentMethod,
-          senderNumber: result.data?.sender_number || null,
-          paidAt: nextStatus === "PAID" && result.data?.date ? new Date(result.data.date) : null,
+          senderNumber: null,
+          paidAt: nextStatus === "PAID" && gatewayPayment?.tran_date ? new Date(gatewayPayment.tran_date) : null,
         },
       })
     } catch (error) {

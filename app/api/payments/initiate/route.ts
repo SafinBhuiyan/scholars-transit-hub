@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { createCheckout, generateInvoiceNumber, getPaymentUrls } from "@/lib/uddoktapay";
+import { generateInvoiceNumber, getGatewayUrl, initiatePayment } from "@/lib/sslcommerz";
+
+function getErrorMessage(error: unknown, fallback: string) {
+    return error instanceof Error ? error.message : fallback;
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -60,57 +64,56 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Generate invoice number if not exists
-        let invoiceNumber = payment.invoiceNumber;
-        if (!invoiceNumber) {
-            invoiceNumber = generateInvoiceNumber(payment.applicationId);
+        // SSLCommerz uses tran_id as the merchant transaction reference.
+        let invoiceId = payment.invoiceId;
+        const invoiceNumber = payment.invoiceNumber || invoiceId || generateInvoiceNumber(payment.applicationId);
+        if (!invoiceId) {
+            invoiceId = invoiceNumber;
             await prisma.payment.update({
                 where: { id: paymentId },
-                data: { invoiceNumber },
+                data: {
+                    invoiceId,
+                    invoiceNumber,
+                },
             });
         }
 
-        // Get payment URLs
-        const { redirectUrl, cancelUrl, webhookUrl } = getPaymentUrls(payment.applicationId);
-
-        // Create checkout session with UddoktaPay
-        const checkoutResponse = await createCheckout({
+        const checkoutResponse = await initiatePayment({
             amount: payment.amount.toString(),
+            currency: payment.currency,
             fullName: payment.application.fullName,
             email: payment.application.user.email,
-            invoiceNumber: invoiceNumber,
-            paymentType: "Transport Pass Payment",
-            redirectUrl,
-            cancelUrl,
-            webhookUrl,
-            metadata: {
-                applicationId: payment.applicationId,
-                userId: payment.application.userId,
-                semester: payment.semester?.name || payment.notes || "",
-            },
+            phone: payment.application.phone,
+            tranId: invoiceId,
+            applicationId: payment.applicationId,
+            productName: payment.semester?.name
+                ? `Transport Pass Payment - ${payment.semester.name}`
+                : "Transport Pass Payment",
         });
+        const gatewayUrl = getGatewayUrl(checkoutResponse);
 
-        if (!checkoutResponse.status || !checkoutResponse.payment_url) {
-            throw new Error(checkoutResponse.message || "Failed to create checkout session");
+        if (checkoutResponse.status !== "SUCCESS" || !gatewayUrl) {
+            throw new Error(checkoutResponse.failedreason || "Failed to create checkout session");
         }
 
         await prisma.payment.update({
             where: { id: paymentId },
             data: {
-                paymentUrl: checkoutResponse.payment_url,
-                invoiceId: checkoutResponse.invoice_id || null,
+                paymentUrl: gatewayUrl,
+                invoiceId,
+                invoiceNumber,
             },
         });
 
         return NextResponse.json({
             success: true,
-            paymentUrl: checkoutResponse.payment_url,
-            invoiceId: checkoutResponse.invoice_id || null,
+            paymentUrl: gatewayUrl,
+            invoiceId,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Failed to initiate payment:", error);
         return NextResponse.json(
-            { error: error.message || "Failed to initiate payment" },
+            { error: getErrorMessage(error, "Failed to initiate payment") },
             { status: 500 }
         );
     }

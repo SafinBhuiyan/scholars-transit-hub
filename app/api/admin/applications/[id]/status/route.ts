@@ -3,6 +3,9 @@ import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { renderEmailTemplate, sendEmail } from "@/lib/email"
+import { generateInvoiceNumber } from "@/lib/sslcommerz"
+
+const STUDENT_PAYMENT_AMOUNT = 100
 
 export async function PATCH(
     request: Request,
@@ -24,6 +27,37 @@ export async function PATCH(
 
         const { id } = await params
 
+        const currentApplication = await prisma.transportApplication.findUnique({
+            where: { id },
+            include: {
+                route: {
+                    select: {
+                        capacity: true,
+                    },
+                },
+            },
+        })
+
+        if (!currentApplication) {
+            return NextResponse.json({ error: "Application not found" }, { status: 404 })
+        }
+
+        if (status === "APPROVED" && currentApplication.status !== "APPROVED") {
+            const approvedCount = await prisma.transportApplication.count({
+                where: {
+                    routeId: currentApplication.routeId,
+                    status: "APPROVED",
+                },
+            })
+
+            if (approvedCount >= currentApplication.route.capacity) {
+                return NextResponse.json(
+                    { error: "Route capacity has been reached. This application cannot be approved." },
+                    { status: 400 }
+                )
+            }
+        }
+
         const application = await prisma.transportApplication.update({
             where: { id },
             data: { status },
@@ -31,6 +65,51 @@ export async function PATCH(
                 user: true,
             },
         })
+
+        if (status === "APPROVED") {
+            await prisma.notification.create({
+                data: {
+                    userId: application.userId,
+                    title: "Application Approved",
+                    message: application.applicantType === "STUDENT"
+                        ? "Please complete payment to activate your pass."
+                        : "Your pass is now active.",
+                },
+            })
+        }
+
+        if (status === "REJECTED") {
+            await prisma.notification.create({
+                data: {
+                    userId: application.userId,
+                    title: "Application Rejected",
+                    message: "Your transport application has been rejected.",
+                },
+            })
+        }
+
+        if (status === "APPROVED" && application.applicantType === "STUDENT") {
+            const existingPayment = await prisma.payment.findFirst({
+                where: {
+                    applicationId: application.id,
+                    status: {
+                        in: ["PENDING", "PAID"],
+                    },
+                },
+            })
+
+            if (!existingPayment) {
+                await prisma.payment.create({
+                    data: {
+                        applicationId: application.id,
+                        amount: STUDENT_PAYMENT_AMOUNT,
+                        invoiceNumber: generateInvoiceNumber(application.id),
+                        notes: "System-generated transport pass payment",
+                        status: "PENDING",
+                    },
+                })
+            }
+        }
 
         if (application.user?.email) {
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000"

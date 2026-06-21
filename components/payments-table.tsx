@@ -107,6 +107,23 @@ type Payment = {
   }
 }
 
+type GatewayPayment = {
+  tran_id?: string
+  amount?: string
+  status?: string
+  card_type?: string
+  bank_tran_id?: string
+  val_id?: string
+  tran_date?: string
+}
+
+type GatewayDetails = {
+  element?: GatewayPayment[]
+  error?: string
+  message?: string
+  paymentUrl?: string
+}
+
 export function PaymentsTable({ data }: { data: Payment[] }) {
   const router = useRouter()
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -123,9 +140,9 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [paymentToDelete, setPaymentToDelete] = React.useState<Payment | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
-  const [uddoktaOpen, setUddoktaOpen] = React.useState(false)
-  const [uddoktaLoading, setUddoktaLoading] = React.useState(false)
-  const [uddoktaData, setUddoktaData] = React.useState<any>(null)
+  const [gatewayOpen, setGatewayOpen] = React.useState(false)
+  const [gatewayLoading, setGatewayLoading] = React.useState(false)
+  const [gatewayData, setGatewayData] = React.useState<GatewayDetails | null>(null)
 
   // Form state for editing
   const [editForm, setEditForm] = React.useState({
@@ -205,22 +222,22 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
     }
   }
 
-  const handleUddoktaDetails = async (payment: Payment) => {
-    setUddoktaOpen(true)
-    setUddoktaLoading(true)
-    setUddoktaData(null)
+  const handleGatewayDetails = async (payment: Payment) => {
+    setGatewayOpen(true)
+    setGatewayLoading(true)
+    setGatewayData(null)
     try {
-      const response = await fetch(`/api/admin/payments/${payment.id}/uddoktapay`)
+      const response = await fetch(`/api/admin/payments/${payment.id}/sslcommerz`)
       const data = await response.json()
       if (!response.ok) {
-        setUddoktaData(data)
+        setGatewayData(data)
         return
       }
-      setUddoktaData(data)
+      setGatewayData(data)
     } catch (error) {
-      toast.error("Failed to load UddoktaPay details")
+      toast.error("Failed to load SSLCommerz details")
     } finally {
-      setUddoktaLoading(false)
+      setGatewayLoading(false)
     }
   }
 
@@ -406,9 +423,9 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleUddoktaDetails(payment)}
+              onClick={() => handleGatewayDetails(payment)}
               className="h-8 w-8 p-0"
-              title="UddoktaPay Details"
+              title="SSLCommerz Details"
             >
               <IconReceipt className="h-4 w-4" />
             </Button>
@@ -740,53 +757,53 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* UddoktaPay Details Dialog */}
-      <Dialog open={uddoktaOpen} onOpenChange={setUddoktaOpen}>
+      {/* SSLCommerz Details Dialog */}
+      <Dialog open={gatewayOpen} onOpenChange={setGatewayOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>UddoktaPay Details</DialogTitle>
+            <DialogTitle>SSLCommerz Details</DialogTitle>
             <DialogDescription>Live details from the payment gateway.</DialogDescription>
           </DialogHeader>
-          {uddoktaLoading ? (
+          {gatewayLoading ? (
             <div className="py-6 text-sm text-muted-foreground">Loading details...</div>
-          ) : uddoktaData?.data ? (
+          ) : gatewayData?.element?.[0] ? (
             <div className="grid gap-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Invoice ID</span>
-                <span className="font-mono">{uddoktaData.data.invoice_id}</span>
+                <span className="text-muted-foreground">Transaction ID</span>
+                <span className="font-mono">{gatewayData.element[0].tran_id}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Amount</span>
-                <span>{uddoktaData.data.amount}</span>
+                <span>{gatewayData.element[0].amount}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Status</span>
-                <span>{uddoktaData.data.status}</span>
+                <span>{gatewayData.element[0].status}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Method</span>
-                <span>{uddoktaData.data.payment_method}</span>
+                <span className="text-muted-foreground">Card Type</span>
+                <span>{gatewayData.element[0].card_type || "N/A"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Transaction ID</span>
-                <span className="font-mono">{uddoktaData.data.transaction_id}</span>
+                <span className="text-muted-foreground">Bank Transaction ID</span>
+                <span className="font-mono">{gatewayData.element[0].bank_tran_id}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Sender Number</span>
-                <span>{uddoktaData.data.sender_number}</span>
+                <span className="text-muted-foreground">Validation ID</span>
+                <span>{gatewayData.element[0].val_id}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Date</span>
-                <span>{uddoktaData.data.date}</span>
+                <span>{gatewayData.element[0].tran_date}</span>
               </div>
             </div>
           ) : (
             <div className="py-6 text-sm text-muted-foreground">
-              {uddoktaData?.error || uddoktaData?.message || "No details available."}
-              {uddoktaData?.paymentUrl && (
+              {gatewayData?.error || gatewayData?.message || "No details available."}
+              {gatewayData?.paymentUrl && (
                 <div className="mt-3">
                   <a
-                    href={uddoktaData.paymentUrl}
+                    href={gatewayData.paymentUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="text-primary underline"
@@ -798,7 +815,7 @@ export function PaymentsTable({ data }: { data: Payment[] }) {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setUddoktaOpen(false)}>
+            <Button variant="outline" onClick={() => setGatewayOpen(false)}>
               Close
             </Button>
           </DialogFooter>

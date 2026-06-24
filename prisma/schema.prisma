@@ -216,6 +216,7 @@ model Route {
   id           String                 @id @default(uuid())
   name         String
   capacity     Int
+  fees         Int                    @default(0)
   startTime    String
   returnTime   String
   isActive     Boolean                @default(true)

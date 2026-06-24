@@ -1,15 +1,15 @@
-const SSLCOMMERZ_STORE_ID =
-  process.env.SSLCOMMERZ_STORE_ID ||
-  process.env.SSLCOMMERZ_STOREID ||
-  process.env.SSL_COMMERZ_STORE_ID ||
-  "testbox"
+const SSLCOMMERZ_STORE_ID = process.env.SSLCOMMERZ_STORE_ID || ""
 const SSLCOMMERZ_STORE_PASSWORD =
   process.env.SSLCOMMERZ_STORE_PASSWORD ||
-  process.env.SSLCOMMERZ_STORE_PASSWD ||
-  process.env.SSLCOMMERZ_STOREPASSWD ||
-  process.env.SSL_COMMERZ_STORE_PASSWORD ||
-  "qwerty"
-const SSLCOMMERZ_BASE_URL = "https://sandbox.sslcommerz.com"
+  process.env.SSLCOMMERZ_STORE_SECRET_KEY ||
+  ""
+
+// Set SSLCOMMERZ_IS_LIVE=true in .env to switch to the live gateway
+const IS_LIVE = process.env.SSLCOMMERZ_IS_LIVE === "true"
+const SSLCOMMERZ_BASE_URL = IS_LIVE
+  ? "https://securepay.sslcommerz.com"
+  : "https://sandbox.sslcommerz.com"
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
 const INITIATE_ENDPOINT = `${SSLCOMMERZ_BASE_URL}/gwprocess/v4/api.php`

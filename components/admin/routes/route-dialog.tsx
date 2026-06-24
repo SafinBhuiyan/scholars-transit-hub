@@ -5,7 +5,7 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { IconLoader, IconRoute } from "@tabler/icons-react"
+import { IconLoader, IconRoute, IconCurrencyTaka } from "@tabler/icons-react"
 
 import {
     Dialog,
@@ -24,6 +24,7 @@ import { Kbd } from "@/components/ui/kbd"
 const routeSchema = z.object({
     name: z.string().min(1, "Name is required"),
     capacity: z.number().int().positive("Capacity must be positive"),
+    fees: z.number().int().min(0, "Fees cannot be negative"),
     startTime: z.string().min(1, "Start time is required"),
     returnTime: z.string().min(1, "Return time is required"),
     isActive: z.boolean(),
@@ -51,6 +52,7 @@ export function RouteDialog({
         defaultValues: {
             name: "",
             capacity: 50,
+            fees: 0,
             startTime: "",
             returnTime: "",
             isActive: true,
@@ -62,6 +64,7 @@ export function RouteDialog({
             form.reset({
                 name: route.name,
                 capacity: route.capacity,
+                fees: route.fees ?? 0,
                 startTime: route.startTime,
                 returnTime: route.returnTime,
                 isActive: route.isActive,
@@ -70,6 +73,7 @@ export function RouteDialog({
             form.reset({
                 name: "",
                 capacity: 50,
+                fees: 0,
                 startTime: "",
                 returnTime: "",
                 isActive: true,
@@ -132,17 +136,33 @@ export function RouteDialog({
 
                         {/* Configuration Box */}
                         <div className="grid gap-4 p-4 border rounded-md bg-muted/50">
-                            <div className="grid gap-2">
-                                <Label htmlFor="capacity">Capacity</Label>
-                                <Input
-                                    id="capacity"
-                                    type="number"
-                                    placeholder="Max seats"
-                                    {...form.register("capacity", { valueAsNumber: true })}
-                                />
-                                {form.formState.errors.capacity && (
-                                    <p className="text-xs text-destructive font-medium">{form.formState.errors.capacity.message}</p>
-                                )}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="capacity">Capacity</Label>
+                                    <Input
+                                        id="capacity"
+                                        type="number"
+                                        placeholder="Max seats"
+                                        onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                        {...form.register("capacity", { valueAsNumber: true })}
+                                    />
+                                    {form.formState.errors.capacity && (
+                                        <p className="text-xs text-destructive font-medium">{form.formState.errors.capacity.message}</p>
+                                    )}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="fees">Fees (Tk)</Label>
+                                    <Input
+                                        id="fees"
+                                        type="number"
+                                        placeholder="e.g. 1500"
+                                        onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                        {...form.register("fees", { valueAsNumber: true })}
+                                    />
+                                    {form.formState.errors.fees && (
+                                        <p className="text-xs text-destructive font-medium">{form.formState.errors.fees.message}</p>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

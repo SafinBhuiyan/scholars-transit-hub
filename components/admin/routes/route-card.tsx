@@ -12,7 +12,8 @@ import {
     IconChevronDown, 
     IconMapPin,
     IconRoute,
-    IconGripVertical
+    IconGripVertical,
+    IconCurrencyTaka
 } from "@tabler/icons-react"
 import {
     DndContext,
@@ -277,6 +278,9 @@ export function RouteCard({
                 <div className="flex flex-wrap gap-1.5 pt-1">
                     <Badge variant="secondary" className="h-5 bg-muted/40 text-[9px] gap-1 px-1.5 border-transparent font-medium text-muted-foreground">
                         <IconUsers className="h-2.5 w-2.5" /> {route.capacity} seats
+                    </Badge>
+                    <Badge variant="secondary" className="h-5 bg-muted/40 text-[9px] gap-1 px-1.5 border-transparent font-medium text-muted-foreground">
+                        <IconCurrencyTaka className="h-2.5 w-2.5" /> {route.fees?.toLocaleString() ?? 0} Tk
                     </Badge>
                     <Badge variant="outline" className="h-5 text-[9px] gap-1.5 px-1.5 border-border/40 font-normal text-muted-foreground">
                         <IconClock className="h-2.5 w-2.5" /> {formatTime12h(route.startTime)}

@@ -78,9 +78,6 @@ export default function FilesDocsPage() {
   const [uploadCategory, setUploadCategory] = React.useState("")
 
   // Preview dialog state
-  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false)
-  const [selectedFile, setSelectedFile] = React.useState<FileItem | null>(null)
-
   // Delete dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [fileToDelete, setFileToDelete] = React.useState<string | null>(null)
@@ -306,17 +303,6 @@ export default function FilesDocsPage() {
                     variant="outline"
                     size="sm"
                     className="flex-1 h-7 text-[11px] gap-1 px-2 border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm bg-background/50"
-                    onClick={() => {
-                      setSelectedFile(file)
-                      setIsPreviewOpen(true)
-                    }}
-                  >
-                    <IconEye className="h-3 w-3" /> View
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 h-7 text-[11px] gap-1 px-2 border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm bg-background/50"
                     onClick={() => window.open(file.url, "_blank")}
                   >
                     <IconDownload className="h-3 w-3" /> Download
@@ -438,33 +424,6 @@ export default function FilesDocsPage() {
                   Upload
                 </>
               )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Preview Dialog */}
-      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-3xl w-[90vw] max-h-[90vh] h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{selectedFile?.originalName || selectedFile?.fileName || "Preview"}</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden rounded-lg bg-muted/20">
-            {selectedFile && (
-              <iframe 
-                src={selectedFile.url} 
-                className="w-full h-full border-0 rounded-lg"
-                title={selectedFile.originalName || "Document Viewer"}
-              />
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
-              Close
-            </Button>
-            <Button onClick={() => selectedFile && window.open(selectedFile.url, "_blank")}>
-              <IconDownload className="h-4 w-4 mr-2" />
-              Download
             </Button>
           </DialogFooter>
         </DialogContent>

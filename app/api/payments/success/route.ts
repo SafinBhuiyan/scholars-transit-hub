@@ -40,46 +40,81 @@ async function handleSuccess(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  const validation = await validatePayment(valId)
-  const status = validation.status?.toUpperCase()
+  try {
+    const validation = await validatePayment(valId)
+    const status = validation.status?.toUpperCase()
 
-  if ((status === "VALID" || status === "VALIDATED") && validation.tran_id === tranId) {
-    const payment = await prisma.payment.findUnique({
-      where: { invoiceId: tranId },
-      select: {
-        id: true,
-        status: true,
-        application: {
-          select: {
-            userId: true,
+    if ((status === "VALID" || status === "VALIDATED") && validation.tran_id === tranId) {
+      const payment = await prisma.payment.findUnique({
+        where: { invoiceId: tranId },
+        select: {
+          id: true,
+          status: true,
+          type: true,
+          application: {
+            select: {
+              id: true,
+              userId: true,
+              status: true,
+            },
           },
         },
-      },
-    })
-
-    await prisma.payment.updateMany({
-      where: { invoiceId: tranId },
-      data: {
-        status: "PAID",
-        transactionId: validation.bank_tran_id || validation.val_id || null,
-        method: validation.card_type ? "CARD" : null,
-        senderNumber: null,
-        paidAt: validation.tran_date ? new Date(validation.tran_date) : new Date(),
-      },
-    })
-
-    if (payment && payment.status !== "PAID") {
-      await prisma.notification.create({
-        data: {
-          userId: payment.application.userId,
-          title: "Payment Successful",
-          message: "Your transport pass is now active.",
-        },
       })
+
+      if (payment && payment.status !== "PAID") {
+        const now = new Date()
+        const billingEnd = new Date(now)
+        billingEnd.setDate(billingEnd.getDate() + 30)
+        const billingMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+
+        // Mark payment as PAID with billing dates
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: "PAID",
+            transactionId: validation.bank_tran_id || validation.val_id || null,
+            method: validation.card_type ? "CARD" : null,
+            senderNumber: null,
+            paidAt: validation.tran_date ? new Date(validation.tran_date) : now,
+            billingStart: now,
+            billingEnd: billingEnd,
+            billingMonth: billingMonth,
+          },
+        })
+
+        // For INITIAL payments: promote application from PENDING_PAYMENT → WAITLIST
+        if (payment.type === "INITIAL" && payment.application.status === "PENDING_PAYMENT") {
+          await prisma.transportApplication.update({
+            where: { id: payment.application.id },
+            data: { status: "WAITLIST" },
+          })
+
+          await prisma.notification.create({
+            data: {
+              userId: payment.application.userId,
+              title: "Payment Received",
+              message: "Your payment was successful. Your application is now under review.",
+            },
+          })
+        }
+
+        // For RENEWAL payments: extend billing period
+        if (payment.type === "RENEWAL") {
+          await prisma.notification.create({
+            data: {
+              userId: payment.application.userId,
+              title: "Pass Renewed",
+              message: `Your transport pass has been renewed until ${billingEnd.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}.`,
+            },
+          })
+        }
+      }
     }
+  } catch (error) {
+    console.error("Payment validation error:", error)
   }
 
-  return NextResponse.redirect(redirectUrl)
+  return NextResponse.redirect(redirectUrl, 303)
 }
 
 export async function GET(request: NextRequest) {

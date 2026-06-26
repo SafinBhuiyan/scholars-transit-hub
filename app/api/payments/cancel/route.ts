@@ -21,7 +21,7 @@ async function handleCancel(request: NextRequest) {
   const tranId = await readTranId(request)
   const redirectUrl = new URL("/dashboard/payment/cancel", request.nextUrl.origin)
   if (tranId) redirectUrl.searchParams.set("invoice_id", tranId)
-  return NextResponse.redirect(redirectUrl)
+  return NextResponse.redirect(redirectUrl, 303)
 }
 
 export async function GET(request: NextRequest) {

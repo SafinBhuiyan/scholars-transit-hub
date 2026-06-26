@@ -4,7 +4,7 @@ type PassApplication = {
   id: string
   createdAt: Date
   updatedAt: Date
-  status: "WAITLIST" | "APPROVED" | "REJECTED"
+  status: "PENDING_PAYMENT" | "WAITLIST" | "APPROVED" | "REJECTED"
   applicantType: "STUDENT" | "ACADEMIC" | "ADMINISTRATIVE"
   fullName: string
   route: {
@@ -16,6 +16,7 @@ type PassApplication = {
   payments: Array<{
     status: "PENDING" | "PAID" | "FAILED" | "REFUNDED"
     paidAt: Date | null
+    billingEnd: Date | null
   }>
 }
 
@@ -25,21 +26,36 @@ export function getPassId(application: Pick<PassApplication, "id" | "createdAt">
 
 export function getPassState(application: PassApplication) {
   const isStudent = application.applicantType === "STUDENT"
-  const latestPaidPayment = application.payments.find((payment) => payment.status === "PAID") ?? null
-  const hasPaidRequirement = !isStudent || Boolean(latestPaidPayment)
+  const now = new Date()
+
+  // Find the latest PAID payment that hasn't expired
+  const latestActivePayment = application.payments.find(
+    (payment) =>
+      payment.status === "PAID" &&
+      (!payment.billingEnd || new Date(payment.billingEnd) > now)
+  ) ?? null
+
+  // For students: must have an active (non-expired) payment
+  // For staff: no payment needed
+  const hasPaidRequirement = !isStudent || Boolean(latestActivePayment)
   const isApproved = application.status === "APPROVED"
   const isPassActive = isApproved && hasPaidRequirement
-  const passIssuedAt = latestPaidPayment?.paidAt ?? application.updatedAt
+
+  // Billing end from the latest active payment
+  const billingEnd = latestActivePayment?.billingEnd ?? null
+
+  const passIssuedAt = latestActivePayment?.paidAt ?? application.updatedAt
   const passId = getPassId(application)
 
   return {
     isStudent,
-    latestPaidPayment,
+    latestActivePayment,
     hasPaidRequirement,
     isApproved,
     isPassActive,
     passIssuedAt,
     passId,
+    billingEnd,
   }
 }
 

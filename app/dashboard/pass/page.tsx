@@ -87,7 +87,7 @@ export default async function StudentPassPage() {
     )
   }
 
-  const { isStudent, latestPaidPayment, hasPaidRequirement, isApproved, isPassActive, passId, passIssuedAt } =
+  const { isStudent, latestActivePayment, hasPaidRequirement, isApproved, isPassActive, passId, passIssuedAt, billingEnd } =
     getPassState(application)
   const qrCodeSvg = await getPassQrSvg(application, session.user.id, 220)
 
@@ -128,7 +128,7 @@ export default async function StudentPassPage() {
               <p className="text-xs text-muted-foreground">Payment status</p>
               <p className="mt-1 font-medium">
                 {isStudent
-                  ? latestPaidPayment
+                  ? latestActivePayment
                     ? "Paid"
                     : application.payments.some((payment) => payment.status === "PENDING")
                       ? "Payment pending"
@@ -285,17 +285,23 @@ export default async function StudentPassPage() {
               <div className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">Payment</span>
                 <Badge variant="outline">
-                  {isStudent ? (latestPaidPayment ? "Paid" : "Pending") : "Not required"}
+                  {isStudent ? (latestActivePayment ? "Paid" : "Pending") : "Not required"}
                 </Badge>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">Last updated</span>
                 <span className="font-medium">{formatDateShort(application.updatedAt)}</span>
               </div>
-              {latestPaidPayment?.paidAt ? (
+              {latestActivePayment?.paidAt ? (
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Payment confirmed</span>
-                  <span className="font-medium">{formatDateShort(latestPaidPayment.paidAt)}</span>
+                  <span className="font-medium">{formatDateShort(latestActivePayment.paidAt)}</span>
+                </div>
+              ) : null}
+              {billingEnd ? (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Expires on</span>
+                  <span className="font-medium">{formatDateShort(billingEnd)}</span>
                 </div>
               ) : null}
             </CardContent>

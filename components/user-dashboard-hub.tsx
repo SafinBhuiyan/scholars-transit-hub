@@ -7,6 +7,7 @@ import {
   IconBell,
   IconCalendar,
   IconClock,
+  IconCurrencyTaka,
   IconEye,
   IconId,
   IconFileDescription,
@@ -14,6 +15,8 @@ import {
   IconPinned,
   IconRoute,
   IconUsers,
+  IconAlertCircle,
+  IconLoader,
 } from "@tabler/icons-react"
 
 import { NoticeViewDialog } from "@/components/notices/notice-view-dialog"
@@ -23,6 +26,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDateShort, formatTimeShort } from "@/lib/utils"
+import { toast } from "sonner"
 
 const PdfPreview = dynamic(() => import("@/components/pdf-preview").then((mod) => mod.PdfPreview), {
   ssr: false,
@@ -70,6 +74,7 @@ type DashboardPass = {
   pickupPointName: string
   issuedOn: string
   expiresOn: string
+  billingEnd: string | null
   studentMeta: string | null
 }
 
@@ -77,6 +82,7 @@ type DashboardRoute = {
   id: string
   name: string
   capacity: number
+  fees: number
   startTime: string
   returnTime: string
   pickupPoints: Array<{
@@ -106,6 +112,35 @@ export function UserDashboardHub({
 }) {
   const [selectedNotice, setSelectedNotice] = React.useState<DashboardNotice | null>(null)
   const [selectedFile, setSelectedFile] = React.useState<DashboardFile | null>(null)
+  const [isRenewing, setIsRenewing] = React.useState(false)
+
+  const handleRenew = async () => {
+    try {
+      setIsRenewing(true)
+      const response = await fetch("/api/payments/renew", {
+        method: "POST",
+      })
+      const result = (await response.json()) as { error?: string; paymentUrl?: string; invoiceId?: string }
+
+      if (!response.ok) throw new Error(result.error || "Failed to initiate renewal")
+
+      if (result.paymentUrl) {
+        toast.success("Redirecting to payment gateway...")
+        window.location.href = result.paymentUrl
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to renew pass")
+      setIsRenewing(false)
+    }
+  }
+
+  const isExpiringSoon = pass?.billingEnd 
+    ? Math.ceil((new Date(pass.billingEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 7
+    : false
+
+  const isExpired = pass?.billingEnd 
+    ? new Date(pass.billingEnd) < new Date()
+    : false
 
   return (
     <div className="grid gap-6">
@@ -173,15 +208,48 @@ export function UserDashboardHub({
                       <p className="text-xs text-muted-foreground">Pickup point</p>
                       <p className="mt-1 font-medium leading-snug">{pass.pickupPointName}</p>
                     </div>
-                    <div className="rounded-lg border bg-muted/20 p-3">
-                      <p className="text-xs text-muted-foreground">Issued on</p>
-                      <p className="mt-1 font-medium">{pass.issuedOn}</p>
-                    </div>
-                    <div className="rounded-lg border bg-muted/20 p-3">
-                      <p className="text-xs text-muted-foreground">Expired on</p>
-                      <p className="mt-1 font-medium">{pass.expiresOn}</p>
-                    </div>
                   </div>
+
+                  {pass.applicantType === "Student" && (
+                    <div className={`mt-4 rounded-lg border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                      isExpired ? "bg-destructive/5 border-destructive/20" :
+                      isExpiringSoon ? "bg-amber-500/5 border-amber-500/20" : "bg-muted/10"
+                    }`}>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Billing Status</p>
+                        <p className="text-sm text-muted-foreground">
+                          {isExpired ? (
+                            <span className="text-destructive inline-flex items-center gap-1">
+                              <IconAlertCircle className="h-4 w-4" />
+                              Pass expired on {pass.expiresOn}
+                            </span>
+                          ) : isExpiringSoon ? (
+                            <span className="text-amber-600 inline-flex items-center gap-1">
+                              <IconAlertCircle className="h-4 w-4" />
+                              Expiring soon on {pass.expiresOn}
+                            </span>
+                          ) : (
+                            <span>Active until {pass.expiresOn}</span>
+                          )}
+                        </p>
+                      </div>
+                      
+                      {(isExpired || isExpiringSoon) && (
+                        <Button 
+                          onClick={handleRenew} 
+                          disabled={isRenewing}
+                          variant={isExpired ? "destructive" : "default"}
+                          className="w-full sm:w-auto shrink-0"
+                        >
+                          {isRenewing ? (
+                            <><IconLoader className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
+                          ) : (
+                            "Renew Pass"
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -221,6 +289,12 @@ export function UserDashboardHub({
                     <div className="space-y-1">
                       <CardTitle className="text-base leading-snug">{route.name}</CardTitle>
                       <CardDescription>{route.capacity} seats available on this route</CardDescription>
+                      {route.fees > 0 && (
+                        <p className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+                          <IconCurrencyTaka className="h-4 w-4" />
+                          {route.fees.toLocaleString()} Tk / month
+                        </p>
+                      )}
                     </div>
                     <Badge variant="outline" className="shrink-0">
                       {route.pickupPoints.length} stops

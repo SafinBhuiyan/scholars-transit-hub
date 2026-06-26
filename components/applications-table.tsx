@@ -102,7 +102,7 @@ export const applicationSchema = z.object({
   phoneVerified: z.boolean(),
   routeName: z.string(),
   pickupPointName: z.string(),
-  status: z.enum(["WAITLIST", "APPROVED", "REJECTED"]),
+  status: z.enum(["PENDING_PAYMENT", "WAITLIST", "APPROVED", "REJECTED"]),
   appliedDate: z.string(),
   idCardUrl: z.string(),
   routeCapacity: z.number().optional(),
@@ -144,6 +144,7 @@ export function ApplicationsTable({
       waitlist: data.filter(a => a.status === "WAITLIST").length,
       approved: data.filter(a => a.status === "APPROVED").length,
       rejected: data.filter(a => a.status === "REJECTED").length,
+      pending: data.filter(a => a.status === "PENDING_PAYMENT").length,
     }
   }, [data])
 
@@ -194,9 +195,10 @@ export function ApplicationsTable({
 
   const getStatusBadge = (status: Application["status"]) => {
     const statusConfig = {
-      WAITLIST: { label: "Needs review", color: "bg-yellow-500/15 text-yellow-700 border-yellow-500/25" },
-      APPROVED: { label: "Awaiting payment", color: "bg-green-500/15 text-green-700 border-green-500/25" },
-      REJECTED: { label: "Closed", color: "bg-red-500/15 text-red-700 border-red-500/25" },
+      WAITLIST: { label: "Needs Review", color: "bg-yellow-500/15 text-yellow-700 border-yellow-500/25" },
+      APPROVED: { label: "Active Pass", color: "bg-green-500/15 text-green-700 border-green-500/25" },
+      REJECTED: { label: "Rejected", color: "bg-red-500/15 text-red-700 border-red-500/25" },
+      PENDING_PAYMENT: { label: "Awaiting Payment", color: "bg-amber-500/15 text-amber-700 border-amber-500/25" },
     }
 
     const config = statusConfig[status]
@@ -206,11 +208,11 @@ export function ApplicationsTable({
         <Tooltip>
           <TooltipTrigger asChild>
             <Badge variant="outline" className={`${config.color} cursor-help`}>
-              {status}
+              {config.label}
             </Badge>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{status === "WAITLIST" ? "Needs review" : status === "APPROVED" ? "Awaiting payment" : "Closed"}</p>
+            <p>{status}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -524,13 +526,16 @@ export function ApplicationsTable({
                     All ({statusCounts.all})
                   </SelectItem>
                   <SelectItem value="WAITLIST">
-                    Waitlist ({statusCounts.waitlist})
+                    Needs Review ({statusCounts.waitlist})
                   </SelectItem>
                   <SelectItem value="APPROVED">
-                    Approved ({statusCounts.approved})
+                    Active Pass ({statusCounts.approved})
                   </SelectItem>
                   <SelectItem value="REJECTED">
                     Rejected ({statusCounts.rejected})
+                  </SelectItem>
+                  <SelectItem value="PENDING_PAYMENT">
+                    Awaiting Payment ({statusCounts.pending})
                   </SelectItem>
                 </SelectContent>
               </Select>

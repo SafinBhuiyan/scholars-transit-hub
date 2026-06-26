@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
+import { generateInvoiceNumber, getGatewayUrl, initiatePayment } from "@/lib/sslcommerz"
 
 export async function POST(request: Request) {
     try {
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
         const existingApplication = await prisma.transportApplication.findFirst({
             where: {
                 userId: session.user.id,
-                status: { in: ["WAITLIST", "APPROVED"] }
+                status: { in: ["PENDING_PAYMENT", "WAITLIST", "APPROVED"] }
             }
         })
 
@@ -59,6 +60,21 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "You already have an active application" }, { status: 400 })
         }
 
+        // Get route to determine fees
+        const route = await prisma.route.findUnique({
+            where: { id: routeId },
+            select: { fees: true, name: true }
+        })
+
+        if (!route) {
+            return NextResponse.json({ error: "Route not found" }, { status: 404 })
+        }
+
+        if (route.fees <= 0) {
+            return NextResponse.json({ error: "Route fees not configured" }, { status: 400 })
+        }
+
+        // Create application with PENDING_PAYMENT status
         const application = await prisma.transportApplication.create({
             data: {
                 userId: session.user.id,
@@ -72,25 +88,60 @@ export async function POST(request: Request) {
                 idCardUrl,
                 routeId,
                 pickupPointId,
-                status: "WAITLIST",
+                status: "PENDING_PAYMENT",
             },
-            include: {
-                route: true,
-            }
         })
 
-        await prisma.notification.create({
+        // Create initial payment record
+        const invoiceNumber = generateInvoiceNumber(application.id)
+        const payment = await prisma.payment.create({
             data: {
-                userId: session.user.id,
-                title: "Application Submitted",
-                message: "Your transport application has been received.",
+                applicationId: application.id,
+                type: "INITIAL",
+                amount: route.fees,
+                invoiceId: invoiceNumber,
+                invoiceNumber: invoiceNumber,
+                notes: `Initial payment for ${route.name}`,
+                status: "PENDING",
             },
         })
 
-        return NextResponse.json({ application }, { status: 201 })
+        // Initiate SSLCommerz payment
+        const sslResponse = await initiatePayment({
+            amount: route.fees.toString(),
+            tranId: invoiceNumber,
+            fullName,
+            email: session.user.email,
+            phone,
+            applicationId: application.id,
+            productName: `Transport Pass - ${route.name} (Monthly)`,
+        })
+
+        const gatewayUrl = getGatewayUrl(sslResponse)
+
+        if (sslResponse.status !== "SUCCESS" || !gatewayUrl) {
+            // Clean up if SSLCommerz initiation fails
+            await prisma.payment.delete({ where: { id: payment.id } })
+            await prisma.transportApplication.delete({ where: { id: application.id } })
+            throw new Error(sslResponse.failedreason || "Failed to initiate payment")
+        }
+
+        // Save the payment URL
+        await prisma.payment.update({
+            where: { id: payment.id },
+            data: { paymentUrl: gatewayUrl },
+        })
+
+        return NextResponse.json({
+            application,
+            paymentUrl: gatewayUrl,
+            invoiceId: invoiceNumber,
+        }, { status: 201 })
     } catch (error) {
         console.error("Error creating application:", error)
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+        return NextResponse.json({
+            error: error instanceof Error ? error.message : "Internal server error"
+        }, { status: 500 })
     }
 }
 
@@ -114,7 +165,10 @@ export async function GET(request: Request) {
                         }
                     }
                 },
-                pickupPoint: true
+                pickupPoint: true,
+                payments: {
+                    orderBy: { createdAt: "desc" },
+                },
             }
         })
 

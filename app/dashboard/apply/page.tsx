@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { IconLoader, IconCheck, IconPhone, IconRoute, IconUser, IconId, IconClock, IconCurrencyTaka } from "@tabler/icons-react"
+import { IconLoader, IconCheck, IconPhone, IconRoute, IconUser, IconId, IconClock, IconCurrencyTaka, IconEdit } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { cn, formatDateShort } from "@/lib/utils"
@@ -313,6 +313,7 @@ export default function ApplyPage() {
   const [loadingRoutes, setLoadingRoutes] = React.useState(true)
   const [existingApplication, setExistingApplication] = React.useState<any>(null)
   const [loadingApplication, setLoadingApplication] = React.useState(true)
+  const [isEditing, setIsEditing] = React.useState(false)
 
   // Fetch routes from API on mount
   React.useEffect(() => {
@@ -396,6 +397,13 @@ export default function ApplyPage() {
       delete body.studentId
     }
     try {
+      if (isEditing) {
+        const delRes = await fetch("/api/applications", { method: "DELETE" })
+        if (!delRes.ok) {
+          throw new Error("Failed to clear previous application for edit")
+        }
+      }
+
       const response = await fetch("/api/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -434,7 +442,7 @@ export default function ApplyPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      {!loadingApplication && !existingApplication && (
+      {!loadingApplication && (!existingApplication || isEditing) && (
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Apply for Transport Pass</h1>
           <p className="text-muted-foreground">Complete the form below to apply for your transport pass.</p>
@@ -445,7 +453,7 @@ export default function ApplyPage() {
         <div className="flex items-center justify-center h-64">
           <IconLoader className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : existingApplication ? (
+      ) : existingApplication && !isEditing ? (
         <div className="flex justify-center">
           <div className="w-full max-w-2xl">
             <Card className="overflow-hidden">
@@ -556,8 +564,59 @@ export default function ApplyPage() {
                 </div>
 
                 {/* Action Button */}
-                <div className="p-6 border-t bg-muted/20">
-                  <Button className="w-full" onClick={() => router.push("/dashboard/pass")}>
+                <div className="p-6 border-t bg-muted/20 flex flex-col gap-3">
+                  {existingApplication.status === "PENDING_PAYMENT" && existingApplication.payments?.some((p: any) => p.status === "PENDING") && (
+                    <Button 
+                      className="w-full" 
+                      onClick={async () => {
+                        try {
+                          const pendingPayment = existingApplication.payments.find((p: any) => p.status === "PENDING");
+                          toast.loading("Initiating payment...", { id: "payment" });
+                          const res = await fetch("/api/payments/initiate", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ paymentId: pendingPayment.id })
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data.error || "Failed to initiate payment");
+                          toast.success("Redirecting to payment gateway...", { id: "payment" });
+                          window.location.href = data.paymentUrl;
+                        } catch (error: any) {
+                          toast.error(error.message, { id: "payment" });
+                        }
+                      }}
+                    >
+                      <IconCurrencyTaka className="mr-2 h-4 w-4" />
+                      Complete Payment
+                    </Button>
+                  )}
+                  {existingApplication.status === "PENDING_PAYMENT" && (
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
+                      onClick={() => {
+                        setApplicantType(existingApplication.applicantType)
+                        setPhone(existingApplication.phone)
+                        setIsPhoneVerified(existingApplication.phoneVerified)
+                        setSelectedRoute(existingApplication.routeId)
+                        setSelectedPickup(existingApplication.pickupPointId)
+                        setIdCardUrl(existingApplication.idCardUrl)
+                        
+                        const fields = ['fullName', 'department', 'batch', 'studentId', 'applicantType', 'idCardUrl', 'routeId', 'pickupPointId']
+                        fields.forEach(field => {
+                          if (existingApplication[field]) {
+                            setValue(field, existingApplication[field])
+                          }
+                        })
+                        
+                        setIsEditing(true)
+                      }}
+                    >
+                      <IconEdit className="mr-2 h-4 w-4" />
+                      Edit Application
+                    </Button>
+                  )}
+                  <Button className="w-full" variant={existingApplication.status === "PENDING_PAYMENT" ? "ghost" : "default"} onClick={() => router.push("/dashboard/pass")}>
                     <IconId className="mr-2 h-4 w-4" />
                     View My Pass
                   </Button>
@@ -741,9 +800,11 @@ export default function ApplyPage() {
                 />
                 {idCardUrl ? (
                   <div className="flex flex-col items-center gap-2">
-                    <div className="h-16 w-24 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <IconCheck className="h-8 w-8 text-primary" />
-                    </div>
+                    <img 
+                      src={idCardUrl} 
+                      alt="ID Card Preview" 
+                      className="h-32 object-contain rounded-lg border bg-muted/30 p-2"
+                    />
                     <p className="text-sm text-primary font-medium">Photo uploaded!</p>
                     <Button
                       type="button"

@@ -31,10 +31,21 @@ import {
   IconEye,
   IconTrash,
   IconX,
+  IconFile,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
 import { AdminCardGridSkeleton } from "@/components/admin/admin-card-grid-skeleton"
 import { Spinner } from "@/components/ui/spinner"
+const PdfPreview = dynamic(() => import("./pdf-preview").then((mod) => mod.PdfPreview), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-xl bg-muted/20 p-1.5">
+      <div className="aspect-[210/297] w-full rounded-lg bg-background">
+        <Skeleton className="h-full w-full rounded-lg" />
+      </div>
+    </div>
+  ),
+})
 
 interface FileItem {
   id: string
@@ -53,17 +64,6 @@ interface CategoryItem {
   id: string
   name: string
 }
-
-const PdfPreview = dynamic(() => import("./pdf-preview").then((mod) => mod.PdfPreview), {
-  ssr: false,
-  loading: () => (
-    <div className="rounded-xl bg-muted/20 p-1.5">
-      <div className="aspect-[210/297] w-full rounded-lg bg-background">
-        <Skeleton className="h-full w-full rounded-lg" />
-      </div>
-    </div>
-  ),
-})
 
 export default function FilesDocsPage() {
   const [files, setFiles] = React.useState<FileItem[]>([])
@@ -305,7 +305,7 @@ export default function FilesDocsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 text-[11px] gap-1 px-2 border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm bg-background/50"
+                    className="flex-1 h-7 text-[11px] gap-1 px-2 border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm bg-background/50"
                     onClick={() => {
                       setSelectedFile(file)
                       setIsPreviewOpen(true)
@@ -313,15 +313,15 @@ export default function FilesDocsPage() {
                   >
                     <IconEye className="h-3 w-3" /> View
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 h-7 text-[11px] gap-1 px-2 border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm bg-background/50"
+                    onClick={() => window.open(file.url, "_blank")}
+                  >
+                    <IconDownload className="h-3 w-3" /> Download
+                  </Button>
                   <div className="flex items-center gap-1.5">
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      className="border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all shadow-sm bg-background/50"
-                      onClick={() => window.open(file.url, "_blank")}
-                    >
-                      <IconDownload className="h-3 w-3" />
-                    </Button>
                     <Button
                       variant="outline"
                       size="icon-sm"
@@ -449,12 +449,14 @@ export default function FilesDocsPage() {
           <DialogHeader>
             <DialogTitle>{selectedFile?.originalName || selectedFile?.fileName || "Preview"}</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden rounded-lg bg-muted/20 flex items-center justify-center">
-            <div className="w-full max-w-[210mm] aspect-[210/297]">
+          <div className="flex-1 overflow-hidden rounded-lg bg-muted/20">
             {selectedFile && (
-              <PdfPreview fileUrl={selectedFile.url} format={selectedFile.format} />
+              <iframe 
+                src={selectedFile.url} 
+                className="w-full h-full border-0 rounded-lg"
+                title={selectedFile.originalName || "Document Viewer"}
+              />
             )}
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import {
@@ -17,6 +18,8 @@ import {
   IconUsers,
   IconAlertCircle,
   IconLoader,
+  IconDownload,
+  IconFile,
 } from "@tabler/icons-react"
 
 import { NoticeViewDialog } from "@/components/notices/notice-view-dialog"
@@ -32,12 +35,14 @@ const PdfPreview = dynamic(() => import("@/components/pdf-preview").then((mod) =
   ssr: false,
   loading: () => (
     <div className="rounded-xl bg-muted/20 p-1.5">
-      <div className="aspect-210/297 w-full rounded-lg bg-background">
+      <div className="aspect-[210/297] w-full rounded-lg bg-background">
         <Skeleton className="h-full w-full rounded-lg" />
       </div>
     </div>
   ),
 })
+
+
 
 type DashboardNotice = {
   id: string
@@ -112,6 +117,7 @@ export function UserDashboardHub({
 }) {
   const [selectedNotice, setSelectedNotice] = React.useState<DashboardNotice | null>(null)
   const [selectedFile, setSelectedFile] = React.useState<DashboardFile | null>(null)
+
   const [isRenewing, setIsRenewing] = React.useState(false)
 
   const handleRenew = async () => {
@@ -483,15 +489,24 @@ export function UserDashboardHub({
                   </div>
                 </div>
 
-                <div className="border-t border-border/30 bg-muted/5 p-2.5 transition-colors group-hover:bg-muted/20">
+                <div className="flex items-center justify-between gap-2 border-t border-border/30 bg-muted/5 p-2.5 transition-colors group-hover:bg-muted/20">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 w-full border-border/40 bg-background/50 px-2 text-[11px] shadow-sm transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                    className="flex-1 h-8 px-2 text-[11px] shadow-sm transition-all border-border/40 bg-background/50 hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
                     onClick={() => setSelectedFile(file)}
                   >
-                    <IconEye className="h-3 w-3" />
-                    View File
+                    <IconEye className="h-3 w-3 mr-1.5" />
+                    View
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 h-8 px-2 text-[11px] shadow-sm transition-all border-border/40 bg-background/50 hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                    onClick={() => window.open(file.url, "_blank")}
+                  >
+                    <IconDownload className="h-3 w-3 mr-1.5" />
+                    Download
                   </Button>
                 </div>
               </div>
@@ -518,14 +533,24 @@ export function UserDashboardHub({
           <DialogHeader>
             <DialogTitle>{selectedFile?.originalName || selectedFile?.fileName || "Preview"}</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-1 items-center justify-center overflow-hidden rounded-lg bg-muted/20">
-            <div className="aspect-210/297 w-full max-w-[210mm]">
-              {selectedFile ? (
-                <PdfPreview fileUrl={selectedFile.url} format={selectedFile.format} />
-              ) : null}
-            </div>
+          <div className="flex flex-1 overflow-hidden rounded-lg bg-muted/20">
+            {selectedFile && (
+              <iframe 
+                src={selectedFile.url} 
+                className="w-full h-full border-0 rounded-lg"
+                title={selectedFile.originalName || "Document Viewer"}
+              />
+            )}
           </div>
-          <DialogFooter showCloseButton />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedFile(null)}>
+              Close
+            </Button>
+            <Button onClick={() => selectedFile && window.open(selectedFile.url, "_blank")}>
+              <IconDownload className="h-4 w-4 mr-2" />
+              Download
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -7,6 +7,7 @@ import prisma from "@/lib/prisma"
 const routeSchema = z.object({
     name: z.string().min(1, "Name is required"),
     capacity: z.number().int().positive("Capacity must be positive"),
+    fees: z.number().int().min(0, "Fees cannot be negative").default(0),
     startTime: z.string().min(1, "Start time is required"),
     returnTime: z.string().min(1, "Return time is required"),
     isActive: z.boolean().default(true),

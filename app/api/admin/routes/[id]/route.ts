@@ -7,6 +7,7 @@ import prisma from "@/lib/prisma"
 const routeUpdateSchema = z.object({
     name: z.string().min(1, "Name is required").optional(),
     capacity: z.number().int().positive("Capacity must be positive").optional(),
+    fees: z.number().int().min(0, "Fees cannot be negative").optional(),
     startTime: z.string().min(1, "Start time is required").optional(),
     returnTime: z.string().min(1, "Return time is required").optional(),
     isActive: z.boolean().optional(),

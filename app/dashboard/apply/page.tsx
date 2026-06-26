@@ -198,7 +198,7 @@ function RouteSelection({
   setSelectedPickup: (pickup: string) => void
   routes: any[]
   loadingRoutes: boolean
-  setValue: (name: string, value: any) => void
+  setValue: (name: string, value: any, options?: Record<string, boolean>) => void
 }) {
   const selectedRouteData = routes.find(r => r.id === selectedRoute)
 
@@ -214,7 +214,7 @@ function RouteSelection({
         onValueChange={(value) => {
           setSelectedRoute(value)
           setSelectedPickup("")
-          setValue("routeId", value)
+          setValue("routeId", value, { shouldValidate: true })
         }}
         disabled={loadingRoutes}
       >
@@ -243,7 +243,7 @@ function RouteSelection({
       {selectedRoute && selectedRouteData && selectedRouteData.pickupPoints.length > 0 && (
         <Select value={selectedPickup} onValueChange={(value) => {
           setSelectedPickup(value)
-          setValue("pickupPointId", value)
+          setValue("pickupPointId", value, { shouldValidate: true })
         }}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select a pickup point" />
@@ -354,6 +354,15 @@ export default function ApplyPage() {
     resolver: zodResolver(schema),
     mode: "onBlur"
   })
+
+  const onError = (errors: any) => {
+    const firstError = Object.values(errors)[0] as any;
+    if (firstError?.message) {
+      toast.error(firstError.message as string);
+    } else {
+      toast.error("Please fill all required fields correctly");
+    }
+  }
 
   const onSubmit = async (data: any) => {
     if (!isPhoneVerified) {
@@ -558,7 +567,10 @@ export default function ApplyPage() {
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
+        <input type="hidden" {...register("department")} />
+        <input type="hidden" {...register("routeId")} />
+        <input type="hidden" {...register("pickupPointId")} />
         {/* Section 1: Apply As */}
         <Card>
           <CardHeader>
@@ -619,7 +631,8 @@ export default function ApplyPage() {
               
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
-                <Select onValueChange={(value) => setValue("department", value)}>
+                <input type="hidden" {...register("department")} />
+                <Select onValueChange={(value) => setValue("department", value, { shouldValidate: true })}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
@@ -773,6 +786,8 @@ export default function ApplyPage() {
             <CardDescription>Choose your preferred route and pickup point.</CardDescription>
           </CardHeader>
           <CardContent>
+            <input type="hidden" {...register("routeId")} />
+            <input type="hidden" {...register("pickupPointId")} />
             <RouteSelection
               selectedRoute={selectedRoute}
               setSelectedRoute={setSelectedRoute}

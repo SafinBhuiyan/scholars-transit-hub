@@ -178,3 +178,34 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
 }
+
+export async function DELETE(request: Request) {
+    try {
+        const session = await auth.api.getSession({ headers: await headers() })
+
+        if (!session || session.user.role !== "USER") {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        // Find pending application
+        const application = await prisma.transportApplication.findFirst({
+            where: { 
+                userId: session.user.id, 
+                status: "PENDING_PAYMENT" 
+            }
+        })
+
+        if (!application) {
+            return NextResponse.json({ error: "No pending application found" }, { status: 404 })
+        }
+
+        await prisma.transportApplication.delete({
+            where: { id: application.id }
+        })
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error("Error deleting application:", error)
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    }
+}

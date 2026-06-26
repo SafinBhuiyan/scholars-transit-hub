@@ -22,10 +22,7 @@ export default async function Page() {
       route: true,
       pickupPoint: true,
       payments: {
-        orderBy: { createdAt: "desc" },
-        include: {
-          semester: true,
-        },
+        orderBy: { createdAt: "desc" }
       }
     }
   })
@@ -70,6 +67,7 @@ export default async function Page() {
       id: true,
       name: true,
       capacity: true,
+      fees: true,
       startTime: true,
       returnTime: true,
       pickupPoints: {
@@ -88,25 +86,12 @@ export default async function Page() {
     },
   })
 
-  const latestSemester = await prisma.semester.findFirst({
-    orderBy: {
-      endDate: "desc",
-    },
-  })
-
   const pass = application
     ? {
         ...getPassState(application),
         qrCodeSvg: await getPassQrSvg(application, session.user.id, 196),
       }
     : null
-
-  const latestRelevantPayment =
-    application?.payments.find((payment) => payment.status === "PAID" && payment.semester?.endDate) ??
-    application?.payments.find((payment) => payment.semester?.endDate) ??
-    application?.payments.find((payment) => payment.status === "PAID") ??
-    application?.payments[0] ??
-    null
 
   const applicantTypeLabel = application
     ? application.applicantType === "STUDENT"
@@ -157,12 +142,10 @@ export default async function Page() {
                 routeName: application?.route.name || "Not assigned",
                 pickupPointName: application?.pickupPoint.name || "Not assigned",
                 issuedOn: formatDateShort(pass.passIssuedAt),
-                expiresOn:
-                  latestRelevantPayment?.semester?.endDate
-                    ? formatDateShort(latestRelevantPayment.semester.endDate)
-                    : latestSemester?.endDate
-                      ? formatDateShort(latestSemester.endDate)
-                      : "Not set",
+                expiresOn: pass.billingEnd
+                  ? formatDateShort(pass.billingEnd)
+                  : "Not set",
+                billingEnd: pass.billingEnd?.toISOString() || null,
                 studentMeta,
               }
             : null

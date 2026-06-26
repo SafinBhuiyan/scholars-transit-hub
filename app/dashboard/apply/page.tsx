@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { IconLoader, IconCheck, IconPhone, IconRoute, IconUser, IconId, IconClock } from "@tabler/icons-react"
+import { IconLoader, IconCheck, IconPhone, IconRoute, IconUser, IconId, IconClock, IconCurrencyTaka } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { cn, formatDateShort } from "@/lib/utils"
@@ -257,6 +257,20 @@ function RouteSelection({
           </SelectContent>
         </Select>
       )}
+
+      {selectedRoute && selectedRouteData && selectedRouteData.fees > 0 && (
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">Monthly Transport Fee</p>
+          <p className="text-lg font-bold text-primary flex items-center gap-1">
+            <IconCurrencyTaka className="h-5 w-5" />
+            {selectedRouteData.fees.toLocaleString()} Tk
+            <span className="text-xs font-normal text-muted-foreground">/ month</span>
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Payment is required upfront via SSLCommerz to submit your application.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -385,8 +399,14 @@ export default function ApplyPage() {
         throw new Error(result.error || "Failed to submit application")
       }
 
-      toast.success("Application submitted successfully!")
-      router.push("/dashboard/pass")
+      // Redirect to SSLCommerz payment gateway
+      if (result.paymentUrl) {
+        toast.success("Redirecting to payment gateway...")
+        window.location.href = result.paymentUrl
+      } else {
+        toast.success("Application submitted successfully!")
+        router.push("/dashboard")
+      }
     } catch (error: any) {
       toast.error(error.message)
     } finally {
@@ -446,6 +466,7 @@ export default function ApplyPage() {
                         ${existingApplication.status === "APPROVED" ? "bg-primary/15 text-primary border-primary/25" : ""}
                         ${existingApplication.status === "REJECTED" ? "bg-destructive/15 text-destructive border-destructive/25" : ""}
                         ${existingApplication.status === "WAITLIST" ? "bg-muted text-muted-foreground border-border" : ""}
+                        ${existingApplication.status === "PENDING_PAYMENT" ? "bg-amber-500/15 text-amber-700 border-amber-500/25" : ""}
                       `}
                     >
                       {existingApplication.status}
@@ -773,10 +794,16 @@ export default function ApplyPage() {
             {isSubmitting ? (
               <>
                 <IconLoader className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
+                Processing...
               </>
             ) : (
-              "Submit Application"
+              <>
+                <IconCurrencyTaka className="mr-1 h-4 w-4" />
+                {selectedRoute && routes.find(r => r.id === selectedRoute)?.fees
+                  ? `Pay ৳${routes.find(r => r.id === selectedRoute)?.fees.toLocaleString()} & Apply`
+                  : "Pay & Apply"
+                }
+              </>
             )}
           </Button>
         </div>
@@ -785,4 +812,3 @@ export default function ApplyPage() {
     </div>
   )
 }
-

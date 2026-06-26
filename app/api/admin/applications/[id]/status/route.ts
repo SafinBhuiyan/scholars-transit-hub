@@ -3,9 +3,7 @@ import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { renderEmailTemplate, sendEmail } from "@/lib/email"
-import { generateInvoiceNumber } from "@/lib/sslcommerz"
-
-const STUDENT_PAYMENT_AMOUNT = 100
+import { initiateRefund } from "@/lib/sslcommerz"
 
 export async function PATCH(
     request: Request,
@@ -34,6 +32,11 @@ export async function PATCH(
                     select: {
                         capacity: true,
                     },
+                },
+                payments: {
+                    where: { status: "PAID" },
+                    orderBy: { createdAt: "desc" },
+                    take: 1,
                 },
             },
         })
@@ -71,49 +74,55 @@ export async function PATCH(
                 data: {
                     userId: application.userId,
                     title: "Application Approved",
-                    message: application.applicantType === "STUDENT"
-                        ? "Please complete payment to activate your pass."
-                        : "Your pass is now active.",
+                    message: "Your transport pass is now active.",
                 },
             })
         }
 
         if (status === "REJECTED") {
+            // Auto-refund via SSLCommerz
+            const paidPayment = currentApplication.payments[0]
+            let refundSuccess = false
+
+            if (paidPayment && paidPayment.transactionId) {
+                try {
+                    const refundResult = await initiateRefund({
+                        bankTranId: paidPayment.transactionId,
+                        refundAmount: paidPayment.amount.toString(),
+                        refundRemarks: reason || "Application rejected by admin",
+                    })
+
+                    await prisma.payment.update({
+                        where: { id: paidPayment.id },
+                        data: {
+                            status: "REFUNDED",
+                            refundId: refundResult.refund_ref_id || null,
+                            refundedAt: new Date(),
+                        },
+                    })
+                    refundSuccess = true
+                } catch (refundError) {
+                    console.error("[REFUND_ERROR]", refundError)
+                    // Still reject the application even if refund fails
+                    // Admin can handle refund manually
+                }
+            }
+
             await prisma.notification.create({
                 data: {
                     userId: application.userId,
                     title: "Application Rejected",
-                    message: "Your transport application has been rejected.",
+                    message: refundSuccess
+                        ? "Your transport application has been rejected. A refund has been initiated."
+                        : "Your transport application has been rejected.",
                 },
             })
-        }
-
-        if (status === "APPROVED" && application.applicantType === "STUDENT") {
-            const existingPayment = await prisma.payment.findFirst({
-                where: {
-                    applicationId: application.id,
-                    status: {
-                        in: ["PENDING", "PAID"],
-                    },
-                },
-            })
-
-            if (!existingPayment) {
-                await prisma.payment.create({
-                    data: {
-                        applicationId: application.id,
-                        amount: STUDENT_PAYMENT_AMOUNT,
-                        invoiceNumber: generateInvoiceNumber(application.id),
-                        notes: "System-generated transport pass payment",
-                        status: "PENDING",
-                    },
-                })
-            }
         }
 
         if (application.user?.email) {
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000"
             if (status === "REJECTED") {
+                const paidPayment = currentApplication.payments[0]
                 await sendEmail({
                     from: "ScholarsPass <no-reply@divupstudio.online>",
                     to: [application.user.email],
@@ -126,6 +135,9 @@ export async function PATCH(
                           <p>After review, we are unable to approve your application at this time.</p>
                           ${reason ? `<div style="background: #fef2f2; padding: 16px; border-radius: 8px; margin: 16px 0;">
                             <p style="margin: 0; color: #b91c1c;"><strong>Review note:</strong> ${reason}</p>
+                          </div>` : ""}
+                          ${paidPayment ? `<div style="background: #eff6ff; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                            <p style="margin: 0; color: #1d4ed8;"><strong>Refund:</strong> A refund of ৳${paidPayment.amount.toLocaleString()} has been initiated. It may take 7–10 business days to process.</p>
                           </div>` : ""}
                           <p>If you believe this was sent in error or would like clarification, please contact the transport office or check your dashboard for updates.</p>
                           <p style="margin-top: 12px;">

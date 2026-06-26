@@ -33,9 +33,9 @@ export async function POST(request: NextRequest) {
                 application: {
                     include: {
                         user: true,
+                        route: true,
                     },
                 },
-                semester: true,
             },
         });
 
@@ -86,9 +86,7 @@ export async function POST(request: NextRequest) {
             phone: payment.application.phone,
             tranId: invoiceId,
             applicationId: payment.applicationId,
-            productName: payment.semester?.name
-                ? `Transport Pass Payment - ${payment.semester.name}`
-                : "Transport Pass Payment",
+            productName: `Transport Pass Payment - ${payment.application.route.name}`,
         });
         const gatewayUrl = getGatewayUrl(checkoutResponse);
 

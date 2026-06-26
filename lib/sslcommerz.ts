@@ -181,6 +181,51 @@ export async function queryPaymentByTransactionId(
   return result
 }
 
+const REFUND_ENDPOINT = `${SSLCOMMERZ_BASE_URL}/validator/api/merchantTransIDvalidationAPI.php`
+
+export interface SSLCommerzRefundResponse {
+  APIConnect: string
+  bank_tran_id: string
+  trans_id: string
+  refund_ref_id?: string
+  status: string
+  errorReason?: string
+}
+
 export function getGatewayUrl(response: SSLCommerzInitiateResponse) {
   return response.GatewayPageURL || response.gatewayPageURL || null
+}
+
+export async function initiateRefund(params: {
+  bankTranId: string
+  refundAmount: string
+  refundRemarks?: string
+}): Promise<SSLCommerzRefundResponse> {
+  requireCredentials()
+
+  const payload = new URLSearchParams({
+    bank_tran_id: params.bankTranId,
+    refund_amount: params.refundAmount,
+    refund_remarks: params.refundRemarks || "Application rejected - automatic refund",
+    store_id: SSLCOMMERZ_STORE_ID,
+    store_passwd: SSLCOMMERZ_STORE_PASSWORD,
+    v: "1",
+    format: "json",
+  })
+
+  const response = await fetch(REFUND_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: payload.toString(),
+  })
+
+  const result = (await response.json()) as SSLCommerzRefundResponse
+
+  if (!response.ok || result.status === "FAILED") {
+    throw new Error(result.errorReason || "Failed to initiate SSLCommerz refund")
+  }
+
+  return result
 }

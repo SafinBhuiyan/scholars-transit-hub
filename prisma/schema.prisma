@@ -251,6 +251,7 @@ enum ApplicantType {
 }
 
 enum ApplicationStatus {
+  PENDING_PAYMENT
   WAITLIST
   APPROVED
   REJECTED
@@ -270,6 +271,11 @@ enum PaymentMethod {
   ROCKET
   BANK_TRANSFER
   CARD
+}
+
+enum PaymentType {
+  INITIAL
+  RENEWAL
 }
 
 model TransportApplication {
@@ -294,7 +300,7 @@ model TransportApplication {
   pickupPointId String
   pickupPoint   PickupPoint @relation(fields: [pickupPointId], references: [id])
 
-  status ApplicationStatus @default(WAITLIST)
+  status ApplicationStatus @default(PENDING_PAYMENT)
 
   payments Payment[]
 
@@ -310,8 +316,11 @@ model Payment {
   id            String               @id @default(cuid())
   applicationId String
   application   TransportApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  semesterId    String?
-  semester      Semester?            @relation(fields: [semesterId], references: [id])
+
+  type         PaymentType @default(INITIAL)
+  billingMonth String?     // e.g. "2026-06"
+  billingStart DateTime?
+  billingEnd   DateTime?
 
   amount   Float
   currency String @default("BDT")
@@ -326,6 +335,9 @@ model Payment {
   reference     String?
   senderNumber  String?
 
+  refundId   String?
+  refundedAt DateTime?
+
   paidAt      DateTime?
   requestedAt DateTime  @default(now())
 
@@ -337,17 +349,6 @@ model Payment {
   @@index([applicationId])
   @@index([status])
   @@index([invoiceId])
+  @@index([billingEnd])
   @@map("payment")
-}
-
-model Semester {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  startDate DateTime
-  endDate   DateTime
-  payments  Payment[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("semester")
 }

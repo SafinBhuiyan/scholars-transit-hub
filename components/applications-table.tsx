@@ -107,6 +107,20 @@ export const applicationSchema = z.object({
   idCardUrl: z.string(),
   routeCapacity: z.number().optional(),
   leftCapacity: z.number().optional(),
+  payments: z.array(
+    z.object({
+      id: z.string(),
+      type: z.string(),
+      billingMonth: z.string().nullable().optional(),
+      amount: z.number(),
+      currency: z.string(),
+      status: z.string(),
+      method: z.string().nullable().optional(),
+      transactionId: z.string().nullable().optional(),
+      paidAt: z.string().nullable().optional(),
+      createdAt: z.string().nullable().optional(),
+    })
+  ).optional(),
 })
 
 export type Application = z.infer<typeof applicationSchema>
@@ -219,7 +233,47 @@ export function ApplicationsTable({
     )
   }
 
+  const getFormattedType = (type: Application["applicantType"]) => {
+    if (type === "STUDENT") return "Student"
+    if (type === "ACADEMIC") return "Academic"
+    if (type === "ADMINISTRATIVE") return "Admin"
+    return type
+  }
+
+  const getPaymentStatusBadge = (status: string) => {
+    const config = {
+      PAID: "bg-green-500/15 text-green-700 border-green-500/25",
+      PENDING: "bg-amber-500/15 text-amber-700 border-amber-500/25",
+      FAILED: "bg-red-500/15 text-red-700 border-red-500/25",
+      CANCELLED: "bg-gray-500/15 text-gray-700 border-gray-500/25",
+    }[status] || "bg-gray-500/15 text-gray-700 border-gray-500/25"
+
+    return (
+      <Badge variant="outline" className={`${config} text-[10px] select-none`}>
+        {status}
+      </Badge>
+    )
+  }
+
   const columns: ColumnDef<Application>[] = [
+    {
+      id: "quickView",
+      header: "",
+      cell: ({ row }) => {
+        const application = row.original
+        return (
+          <Button
+            size="icon-sm"
+            variant="default"
+            className="h-7 w-7 text-primary-foreground shadow-sm bg-primary hover:bg-primary/90"
+            onClick={() => handleQuickView(application)}
+            title="Detailed View"
+          >
+            <IconEye className="h-4 w-4" />
+          </Button>
+        )
+      },
+    },
     {
       accessorKey: "fullName",
       header: "Applicant",
@@ -335,11 +389,11 @@ export function ApplicationsTable({
                       <CommandGroup>
                         <CommandItem onSelect={() => handleQuickView(application)}>
                           <IconEye className="mr-2 h-4 w-4" />
-                          Quick View
+                          Detailed View
                         </CommandItem>
                         <CommandItem onSelect={() => handleStatusChangeInitiate(application, "WAITLIST")} disabled>
                           <IconClock className="mr-2 h-4 w-4" />
-                          Set to Wishlist
+                          Set to Waitlist
                         </CommandItem>
                       </CommandGroup>
                     </CommandList>
@@ -353,19 +407,11 @@ export function ApplicationsTable({
         if (status === "APPROVED") {
           return (
             <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 px-2 text-xs"
-                onClick={() => handleQuickView(application)}
-              >
-                <IconEye className="mr-1 h-3 w-3" />
-                Quick View
-              </Button>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-7 px-2">
-                    <IconSelector className="h-3 w-3" />
+                  <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1.5">
+                    Manage
+                    <IconSelector className="h-3.5 w-3.5 text-muted-foreground" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[220px] p-0" align="end">
@@ -378,7 +424,7 @@ export function ApplicationsTable({
                         </CommandItem>
                         <CommandItem onSelect={() => handleStatusChangeInitiate(application, "WAITLIST")}>
                           <IconClock className="mr-2 h-4 w-4" />
-                          Set to Wishlist
+                          Set to Waitlist
                         </CommandItem>
                       </CommandGroup>
                     </CommandList>
@@ -392,19 +438,11 @@ export function ApplicationsTable({
         // REJECTED status - only view details
         return (
           <div className="flex gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-xs"
-              onClick={() => handleQuickView(application)}
-            >
-              <IconEye className="mr-1 h-3 w-3" />
-              View
-            </Button>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 px-2">
-                  <IconSelector className="h-3 w-3" />
+                <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1.5">
+                  Manage
+                  <IconSelector className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[220px] p-0" align="end">
@@ -413,7 +451,7 @@ export function ApplicationsTable({
                     <CommandGroup>
                       <CommandItem onSelect={() => handleStatusChangeInitiate(application, "WAITLIST")}>
                         <IconClock className="mr-2 h-4 w-4" />
-                        Set to Wishlist
+                        Set to Waitlist
                       </CommandItem>
                       <CommandItem onSelect={() => handleStatusChangeInitiate(application, "APPROVED")}>
                         <IconCheck className="mr-2 h-4 w-4" />
@@ -560,58 +598,220 @@ export function ApplicationsTable({
         </>
       )}
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className="h-12"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
+      {/* Application Cards Grid */}
+      {table.getRowModel().rows?.length ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {table.getRowModel().rows.map((row) => {
+            const application = row.original
+            return (
+              <div
+                key={row.id}
+                className="relative flex flex-col justify-between overflow-hidden border bg-card p-5 transition-all hover:shadow-md hover:border-primary/20 rounded-md"
+              >
+                {/* Status & Date bar */}
+                <div className="flex items-center justify-between mb-4 gap-2">
+                  {getStatusBadge(application.status)}
+                  <Badge variant="default" className="font-semibold text-[10px] bg-primary text-primary-foreground hover:bg-primary gap-1 select-none shrink-0">
+                    <IconClock className="h-3 w-3" />
+                    {application.appliedDate}
+                  </Badge>
+                </div>
+
+                {/* Applicant Info Header */}
+                <div className="flex items-start gap-3 mb-4">
+                  <Avatar className="h-10 w-10 shrink-0 cursor-pointer" onClick={() => handleQuickView(application)}>
+                    {application.userImage && <AvatarImage src={application.userImage} alt={application.fullName} />}
+                    <AvatarFallback className="text-sm bg-primary/10 text-primary font-semibold">
+                      {application.fullName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      className="font-semibold text-sm leading-tight text-foreground truncate cursor-pointer hover:underline"
+                      onClick={() => handleQuickView(application)}
+                      title={application.fullName}
+                    >
+                      {application.fullName}
+                    </h3>
+                    <div className="text-xs text-muted-foreground mt-1 flex flex-col gap-0.5">
+                      <span className="truncate font-medium">
+                        {getFormattedType(application.applicantType)} - {application.department}
+                      </span>
+                      {application.applicantType === "STUDENT" && application.studentId && (
+                        <span className="truncate text-[11px] text-muted-foreground/80">
+                          {application.batch} • {application.studentId}
+                        </span>
                       )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No applications found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Route Details Box */}
+                <div className="space-y-2 border-t pt-3 mb-4 text-xs">
+                  <div className="flex justify-between items-start">
+                    <span className="text-muted-foreground">Route:</span>
+                    <div className="text-right">
+                      <span className="font-semibold text-foreground">{application.routeName}</span>
+                      {application.routeCapacity && application.leftCapacity !== undefined && (
+                        <div className="text-[10px] text-muted-foreground">
+                          Capacity: {application.leftCapacity}/{application.routeCapacity}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-start gap-2">
+                    <span className="text-muted-foreground shrink-0">Pickup:</span>
+                    <span className="font-medium text-foreground text-right truncate" title={application.pickupPointName}>
+                      {application.pickupPointName}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Phone:</span>
+                    <span className="font-medium text-foreground flex items-center gap-1">
+                      {application.phone}
+                      {application.phoneVerified && (
+                        <IconCheck className="h-3 w-3 text-green-600 font-bold" />
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions Footer */}
+                <div className="border-t pt-3 mt-auto space-y-2">
+                  {/* Detailed View Button */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full h-8 text-xs border-primary/20 hover:border-primary/50 text-foreground shadow-sm bg-background font-medium"
+                    onClick={() => handleQuickView(application)}
+                  >
+                    <IconEye className="mr-1.5 h-3.5 w-3.5" />
+                    Detailed View
+                  </Button>
+
+                  {/* Contextual Action Buttons */}
+                  <div className="flex gap-2">
+                    {application.status === "WAITLIST" && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700 text-white font-medium"
+                          onClick={() => handleStatusChangeInitiate(application, "APPROVED")}
+                        >
+                          <IconCheck className="mr-1 h-3.5 w-3.5" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="flex-1 h-8 text-xs font-medium"
+                          onClick={() => handleStatusChangeInitiate(application, "REJECTED")}
+                        >
+                          <IconX className="mr-1 h-3.5 w-3.5" />
+                          Reject
+                        </Button>
+                      </>
+                    )}
+
+                    {application.status === "APPROVED" && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1 h-8 text-xs bg-yellow-600 hover:bg-yellow-700 text-white font-medium"
+                          onClick={() => handleStatusChangeInitiate(application, "WAITLIST")}
+                        >
+                          <IconClock className="mr-1 h-3.5 w-3.5" />
+                          Waitlist
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="flex-1 h-8 text-xs font-medium"
+                          onClick={() => handleStatusChangeInitiate(application, "REJECTED")}
+                        >
+                          <IconX className="mr-1 h-3.5 w-3.5" />
+                          Reject Pass
+                        </Button>
+                      </>
+                    )}
+
+                    {application.status === "REJECTED" && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700 text-white font-medium"
+                          onClick={() => handleStatusChangeInitiate(application, "APPROVED")}
+                        >
+                          <IconCheck className="mr-1 h-3.5 w-3.5" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1 h-8 text-xs bg-yellow-600 hover:bg-yellow-700 text-white font-medium"
+                          onClick={() => handleStatusChangeInitiate(application, "WAITLIST")}
+                        >
+                          <IconClock className="mr-1 h-3.5 w-3.5" />
+                          Waitlist
+                        </Button>
+                      </>
+                    )}
+
+                    {application.status === "PENDING_PAYMENT" && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700 text-white font-medium"
+                          onClick={() => handleStatusChangeInitiate(application, "APPROVED")}
+                        >
+                          <IconCheck className="mr-1 h-3.5 w-3.5" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="flex-1 h-8 text-xs font-medium"
+                          onClick={() => handleStatusChangeInitiate(application, "REJECTED")}
+                        >
+                          <IconX className="mr-1 h-3.5 w-3.5" />
+                          Reject
+                        </Button>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-8 w-8 p-0 shrink-0">
+                              <IconSelector className="h-4 w-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[200px] p-0" align="end">
+                            <Command>
+                              <CommandList>
+                                <CommandGroup>
+                                  <CommandItem onSelect={() => handleStatusChangeInitiate(application, "WAITLIST")}>
+                                    <IconClock className="mr-2 h-4 w-4" />
+                                    Set to Waitlist
+                                  </CommandItem>
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="flex items-center justify-center border border-dashed h-36 text-center text-muted-foreground text-sm rounded-md">
+          No applications found.
+        </div>
+      )}
 
       {/* Pagination */}
       <div className="flex items-center justify-end space-x-2">
@@ -702,37 +902,40 @@ export function ApplicationsTable({
 
       {/* Quick View Sheet */}
       <Sheet open={quickViewOpen} onOpenChange={setQuickViewOpen}>
-        <SheetContent className="sm:max-w-[550px] gap-0 p-0 overflow-hidden flex flex-col h-full">
+        <SheetContent className="sm:max-w-[650px] gap-0 p-0 overflow-hidden flex flex-col h-full">
           {quickViewApplication && (
             <>
               <div className="bg-primary/5 p-6 border-b">
                 <SheetHeader>
-                  <div className="flex items-center gap-3 mb-3">
-                    <Avatar className="h-12 w-12">
-                      {quickViewApplication.userImage && <AvatarImage src={quickViewApplication.userImage} alt={quickViewApplication.fullName} />}
-                      <AvatarFallback>{quickViewApplication.fullName.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <SheetTitle className="text-lg sm:text-xl font-bold truncate" title={quickViewApplication.fullName}>
-                        {quickViewApplication.fullName}
-                      </SheetTitle>
-                      <SheetDescription className="truncate">
-                        {quickViewApplication.applicantType} • {quickViewApplication.department}
-                      </SheetDescription>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center justify-between mb-4 gap-2">
                     {getStatusBadge(quickViewApplication.status)}
-                    {quickViewApplication.phoneVerified && (
-                      <Badge variant="default" className="gap-1 bg-green-600">
-                        <IconCheck className="h-3 w-3" />
-                        Phone Verified
-                      </Badge>
-                    )}
-                    <Badge variant="outline" className="gap-1">
+                    <Badge variant="default" className="font-semibold text-[10px] bg-primary text-primary-foreground hover:bg-primary gap-1 select-none shrink-0">
                       <IconClock className="h-3 w-3" />
                       {quickViewApplication.appliedDate}
                     </Badge>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                      {quickViewApplication.userImage && <AvatarImage src={quickViewApplication.userImage} alt={quickViewApplication.fullName} />}
+                      <AvatarFallback className="text-sm bg-primary/10 text-primary font-semibold">
+                        {quickViewApplication.fullName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <SheetTitle className="text-sm sm:text-base font-bold truncate text-foreground" title={quickViewApplication.fullName}>
+                        {quickViewApplication.fullName}
+                      </SheetTitle>
+                      <div className="text-xs text-muted-foreground mt-1 flex flex-col gap-0.5">
+                        <span className="truncate font-medium">
+                          {getFormattedType(quickViewApplication.applicantType)} - {quickViewApplication.department}
+                        </span>
+                        {quickViewApplication.applicantType === "STUDENT" && quickViewApplication.studentId && (
+                          <span className="truncate text-[11px] text-muted-foreground/80">
+                            {quickViewApplication.batch} • {quickViewApplication.studentId}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </SheetHeader>
               </div>
@@ -740,7 +943,7 @@ export function ApplicationsTable({
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {/* ID Card Section */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground">ID Card</Label>
+                  <Label className="text-sm font-semibold text-foreground">ID Card</Label>
                   <div className="border rounded-lg bg-muted/30 p-4">
                     <img
                       src={quickViewApplication.idCardUrl}
@@ -751,72 +954,222 @@ export function ApplicationsTable({
                 </div>
 
                 {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                  {quickViewApplication.applicantType === "STUDENT" && (
-                    <>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Batch</Label>
-                        <p className="text-sm font-medium">{quickViewApplication.batch || "—"}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Student ID</Label>
-                        <p className="text-sm font-medium">{quickViewApplication.studentId || "—"}</p>
-                      </div>
-                    </>
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold text-foreground">Application Details</Label>
+                  <div className="grid grid-cols-2 gap-4 border rounded-md p-4 bg-muted/20 text-xs">
+                    {quickViewApplication.applicantType === "STUDENT" && (
+                      <>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-muted-foreground">Batch</Label>
+                          <p className="text-sm font-medium text-foreground">{quickViewApplication.batch || "—"}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-muted-foreground">Student ID</Label>
+                          <p className="text-sm font-medium text-foreground">{quickViewApplication.studentId || "—"}</p>
+                        </div>
+                      </>
+                    )}
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Phone</Label>
+                      <p className="text-sm font-medium text-foreground flex items-center gap-1">
+                        {quickViewApplication.phone}
+                        {quickViewApplication.phoneVerified && (
+                          <IconCheck className="h-3 w-3 text-green-600 font-bold" />
+                        )}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-muted-foreground">Route</Label>
+                      <p className="text-sm font-medium text-foreground">{quickViewApplication.routeName}</p>
+                    </div>
+                    <div className="space-y-1 col-span-2">
+                      <Label className="text-[10px] text-muted-foreground">Pickup Point</Label>
+                      <p className="text-sm font-medium text-foreground">{quickViewApplication.pickupPointName}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment History Section */}
+                <div className="space-y-3 border-t pt-4">
+                  <Label className="text-sm font-semibold text-foreground">Payment History</Label>
+                  {quickViewApplication.payments && quickViewApplication.payments.length > 0 ? (
+                    <div className="space-y-3">
+                      {quickViewApplication.payments.map((p) => (
+                        <div key={p.id} className="border rounded-md p-4 bg-muted/20 space-y-2 text-xs">
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-foreground">
+                              {p.type === "INITIAL" ? "Initial Fee" : "Pass Renewal"}
+                              {p.billingMonth && ` (${p.billingMonth})`}
+                            </span>
+                            {getPaymentStatusBadge(p.status)}
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 text-muted-foreground">
+                            <div>
+                              Amount: <span className="font-medium text-foreground">{p.amount} {p.currency}</span>
+                            </div>
+                            {p.method && (
+                              <div>
+                                Method: <span className="font-medium text-foreground">{p.method}</span>
+                              </div>
+                            )}
+                            {p.transactionId && (
+                              <div className="col-span-2">
+                                Transaction ID: <span className="font-mono font-medium text-foreground">{p.transactionId}</span>
+                              </div>
+                            )}
+                            <div className="col-span-2 flex flex-col gap-1 border-t pt-1.5 mt-1 text-[11px]">
+                              <div>Requested: {p.createdAt}</div>
+                              {p.paidAt && <div className="text-green-700 dark:text-green-400 font-medium">Paid: {p.paidAt}</div>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground text-center py-4 border border-dashed rounded-md bg-muted/10">
+                      No payments found for this application.
+                    </div>
                   )}
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Phone</Label>
-                    <p className="text-sm font-medium">{quickViewApplication.phone}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Route</Label>
-                    <p className="text-sm font-medium">{quickViewApplication.routeName}</p>
-                  </div>
-                  <div className="space-y-1 col-span-2">
-                    <Label className="text-xs text-muted-foreground">Pickup Point</Label>
-                    <p className="text-sm font-medium">{quickViewApplication.pickupPointName}</p>
-                  </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="p-6 border-t bg-muted/20">
-                {quickViewApplication.status === "WAITLIST" && (
-                  <div className="flex gap-3">
-                    <Button
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                      onClick={() => {
-                        setQuickViewOpen(false)
-                        handleStatusChangeInitiate(quickViewApplication, "APPROVED")
-                      }}
-                    >
-                      <IconCheck className="mr-2 h-4 w-4" />
-                      Approve
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      className="flex-1"
-                      onClick={() => {
-                        setQuickViewOpen(false)
-                        handleStatusChangeInitiate(quickViewApplication, "REJECTED")
-                      }}
-                    >
-                      <IconX className="mr-2 h-4 w-4" />
-                      Reject Pass & Application
-                    </Button>
-                  </div>
-                )}
+                <div className="flex gap-3">
+                  {quickViewApplication.status === "WAITLIST" && (
+                    <>
+                      <Button
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium"
+                        onClick={() => {
+                          setQuickViewOpen(false)
+                          handleStatusChangeInitiate(quickViewApplication, "APPROVED")
+                        }}
+                      >
+                        <IconCheck className="mr-1.5 h-4 w-4" />
+                        Approve
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="flex-1 font-medium"
+                        onClick={() => {
+                          setQuickViewOpen(false)
+                          handleStatusChangeInitiate(quickViewApplication, "REJECTED")
+                        }}
+                      >
+                        <IconX className="mr-1.5 h-4 w-4" />
+                        Reject
+                      </Button>
+                    </>
+                  )}
 
-                {quickViewApplication.status === "REJECTED" && (
-                  <div className="text-center text-sm text-muted-foreground">
-                    <p>This application has been rejected.</p>
-                  </div>
-                )}
+                  {quickViewApplication.status === "APPROVED" && (
+                    <>
+                      <Button
+                        className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-medium"
+                        onClick={() => {
+                          setQuickViewOpen(false)
+                          handleStatusChangeInitiate(quickViewApplication, "WAITLIST")
+                        }}
+                      >
+                        <IconClock className="mr-1.5 h-4 w-4" />
+                        Waitlist
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="flex-1 font-medium"
+                        onClick={() => {
+                          setQuickViewOpen(false)
+                          handleStatusChangeInitiate(quickViewApplication, "REJECTED")
+                        }}
+                      >
+                        <IconX className="mr-1.5 h-4 w-4" />
+                        Reject Pass
+                      </Button>
+                    </>
+                  )}
+
+                  {quickViewApplication.status === "REJECTED" && (
+                    <>
+                      <Button
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium"
+                        onClick={() => {
+                          setQuickViewOpen(false)
+                          handleStatusChangeInitiate(quickViewApplication, "APPROVED")
+                        }}
+                      >
+                        <IconCheck className="mr-1.5 h-4 w-4" />
+                        Approve
+                      </Button>
+                      <Button
+                        className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-medium"
+                        onClick={() => {
+                          setQuickViewOpen(false)
+                          handleStatusChangeInitiate(quickViewApplication, "WAITLIST")
+                        }}
+                      >
+                        <IconClock className="mr-1.5 h-4 w-4" />
+                        Waitlist
+                      </Button>
+                    </>
+                  )}
+
+                  {quickViewApplication.status === "PENDING_PAYMENT" && (
+                    <>
+                      <Button
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium"
+                        onClick={() => {
+                          setQuickViewOpen(false)
+                          handleStatusChangeInitiate(quickViewApplication, "APPROVED")
+                        }}
+                      >
+                        <IconCheck className="mr-1.5 h-4 w-4" />
+                        Approve
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="flex-1 font-medium"
+                        onClick={() => {
+                          setQuickViewOpen(false)
+                          handleStatusChangeInitiate(quickViewApplication, "REJECTED")
+                        }}
+                      >
+                        <IconX className="mr-1.5 h-4 w-4" />
+                        Reject
+                      </Button>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="h-9 w-9 p-0 shrink-0">
+                            <IconSelector className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-0" align="end">
+                          <Command>
+                            <CommandList>
+                              <CommandGroup>
+                                <CommandItem
+                                  onSelect={() => {
+                                    setQuickViewOpen(false)
+                                    handleStatusChangeInitiate(quickViewApplication, "WAITLIST")
+                                  }}
+                                >
+                                  <IconClock className="mr-2 h-4 w-4" />
+                                  Set to Waitlist
+                                </CommandItem>
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </>
+                  )}
+                </div>
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
+
     </div>
   )
 }

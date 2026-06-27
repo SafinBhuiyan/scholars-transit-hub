@@ -30,6 +30,11 @@ export default async function ApplicationsPage() {
       },
       user: true,
       pickupPoint: true,
+      payments: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
     },
   })
 
@@ -59,6 +64,18 @@ export default async function ApplicationsPage() {
       idCardUrl: application.idCardUrl,
       routeCapacity: application.route.capacity,
       leftCapacity: leftCapacity,
+      payments: application.payments.map((p) => ({
+        id: p.id,
+        type: p.type,
+        billingMonth: p.billingMonth,
+        amount: p.amount,
+        currency: p.currency,
+        status: p.status,
+        method: p.method,
+        transactionId: p.transactionId,
+        paidAt: p.paidAt ? `${p.paidAt.getDate()} ${p.paidAt.toLocaleString("en-US", { month: "short" })}, ${p.paidAt.getFullYear()}` : null,
+        createdAt: `${p.createdAt.getDate()} ${p.createdAt.toLocaleString("en-US", { month: "short" })}, ${p.createdAt.getFullYear()}`,
+      })),
     }
   })
 

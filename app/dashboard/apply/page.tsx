@@ -191,6 +191,7 @@ function RouteSelection({
   routes,
   loadingRoutes,
   setValue,
+  applicantType,
 }: {
   selectedRoute: string
   setSelectedRoute: (route: string) => void
@@ -199,6 +200,7 @@ function RouteSelection({
   routes: any[]
   loadingRoutes: boolean
   setValue: (name: string, value: any, options?: Record<string, boolean>) => void
+  applicantType: string
 }) {
   const selectedRouteData = routes.find(r => r.id === selectedRoute)
 
@@ -258,7 +260,7 @@ function RouteSelection({
         </Select>
       )}
 
-      {selectedRoute && selectedRouteData && selectedRouteData.fees > 0 && (
+      {applicantType === "STUDENT" && selectedRoute && selectedRouteData && selectedRouteData.fees > 0 && (
         <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-1">
           <p className="text-xs font-medium text-muted-foreground">Monthly Transport Fee</p>
           <p className="text-lg font-bold text-primary flex items-center gap-1">
@@ -857,6 +859,7 @@ export default function ApplyPage() {
               routes={routes}
               loadingRoutes={loadingRoutes}
               setValue={setValue}
+              applicantType={applicantType}
             />
           </CardContent>
         </Card>
@@ -874,11 +877,17 @@ export default function ApplyPage() {
               </>
             ) : (
               <>
-                <IconCurrencyTaka className="mr-1 h-4 w-4" />
-                {selectedRoute && routes.find(r => r.id === selectedRoute)?.fees
-                  ? `Pay ৳${routes.find(r => r.id === selectedRoute)?.fees.toLocaleString()} & Apply`
-                  : "Pay & Apply"
-                }
+                {applicantType === "STUDENT" ? (
+                  <>
+                    <IconCurrencyTaka className="mr-1 h-4 w-4" />
+                    {selectedRoute && routes.find(r => r.id === selectedRoute)?.fees
+                      ? `Pay ৳${routes.find(r => r.id === selectedRoute)?.fees.toLocaleString()} & Apply`
+                      : "Pay & Apply"
+                    }
+                  </>
+                ) : (
+                  "Submit Application"
+                )}
               </>
             )}
           </Button>

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { renderEmailTemplate, sendEmail } from "@/lib/email"
 import { initiateRefund } from "@/lib/sslcommerz"
+import { sendSMS } from "@/lib/sms"
 
 export async function PATCH(
     request: Request,
@@ -31,6 +32,7 @@ export async function PATCH(
                 route: {
                     select: {
                         capacity: true,
+                        name: true,
                     },
                 },
                 payments: {
@@ -77,6 +79,40 @@ export async function PATCH(
                     message: "Your transport pass is now active.",
                 },
             })
+
+            // Set paid INITIAL payment validity range starting from approval time (for students)
+            const paidInitialPayment = await prisma.payment.findFirst({
+                where: {
+                    applicationId: id,
+                    status: "PAID",
+                    type: "INITIAL",
+                },
+            })
+
+            if (paidInitialPayment) {
+                const now = new Date()
+                const billingEnd = new Date(now)
+                billingEnd.setDate(billingEnd.getDate() + 30)
+                const billingMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+
+                await prisma.payment.update({
+                    where: { id: paidInitialPayment.id },
+                    data: {
+                        billingStart: now,
+                        billingEnd: billingEnd,
+                        billingMonth: billingMonth,
+                    },
+                })
+            }
+
+            try {
+                await sendSMS(
+                    application.phone,
+                    `ScholarsPass: Your transport pass application for ${currentApplication.route.name} has been approved! Your pass is now active.`
+                )
+            } catch (smsError) {
+                console.error("[SMS_ERROR] Failed to send approval SMS:", smsError)
+            }
         }
 
         if (status === "REJECTED") {
@@ -121,6 +157,29 @@ export async function PATCH(
 
         if (application.user?.email) {
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000"
+            
+            if (status === "APPROVED") {
+                await sendEmail({
+                    from: "ScholarsPass <no-reply@divupstudio.online>",
+                    to: [application.user.email],
+                    subject: "Your Transport Pass Application Has Been Approved!",
+                    html: renderEmailTemplate({
+                        title: "Application Approved",
+                        greetingName: application.fullName,
+                        bodyHtml: `
+                          <p>We are pleased to inform you that your transport pass application for the route <strong>${currentApplication.route.name}</strong> has been approved.</p>
+                          <p>Your transport pass is now active and ready for verification. You can log in to your dashboard to view your pass and scan your QR code.</p>
+                          <div style="background: #ecfdf5; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                            <p style="margin: 0; color: #047857;"><strong>Status:</strong> Approved & Active</p>
+                          </div>
+                          <p style="margin-top: 16px;">
+                            <a href="${baseUrl}/dashboard" style="display: inline-block; background: #5C60DB; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Go to Dashboard</a>
+                          </p>
+                        `,
+                    }),
+                })
+            }
+
             if (status === "REJECTED") {
                 const paidPayment = currentApplication.payments[0]
                 await sendEmail({

@@ -70,11 +70,13 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Route not found" }, { status: 404 })
         }
 
-        if (route.fees <= 0) {
+        // Check route fees for students
+        if (applicantType === "STUDENT" && route.fees <= 0) {
             return NextResponse.json({ error: "Route fees not configured" }, { status: 400 })
         }
 
-        // Create application with PENDING_PAYMENT status
+        // Create application (status is WAITLIST for staff, PENDING_PAYMENT for students)
+        const isStudent = applicantType === "STUDENT"
         const application = await prisma.transportApplication.create({
             data: {
                 userId: session.user.id,
@@ -88,11 +90,18 @@ export async function POST(request: Request) {
                 idCardUrl,
                 routeId,
                 pickupPointId,
-                status: "PENDING_PAYMENT",
+                status: isStudent ? "PENDING_PAYMENT" : "WAITLIST",
             },
         })
 
-        // Create initial payment record
+        // For non-students (staff), skip payments and return application details immediately
+        if (!isStudent) {
+            return NextResponse.json({
+                application,
+            }, { status: 201 })
+        }
+
+        // Create initial payment record (Only for students)
         const invoiceNumber = generateInvoiceNumber(application.id)
         const payment = await prisma.payment.create({
             data: {

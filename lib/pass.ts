@@ -16,6 +16,7 @@ type PassApplication = {
   payments: Array<{
     status: "PENDING" | "PAID" | "FAILED" | "REFUNDED"
     paidAt: Date | null
+    billingStart: Date | null
     billingEnd: Date | null
   }>
 }
@@ -41,10 +42,11 @@ export function getPassState(application: PassApplication) {
   const isApproved = application.status === "APPROVED"
   const isPassActive = isApproved && hasPaidRequirement
 
-  // Billing end from the latest active payment
+  // Billing start and end from the latest active payment
+  const billingStart = latestActivePayment?.billingStart ?? null
   const billingEnd = latestActivePayment?.billingEnd ?? null
 
-  const passIssuedAt = latestActivePayment?.paidAt ?? application.updatedAt
+  const passIssuedAt = application.updatedAt
   const passId = getPassId(application)
 
   return {
@@ -55,6 +57,7 @@ export function getPassState(application: PassApplication) {
     isPassActive,
     passIssuedAt,
     passId,
+    billingStart,
     billingEnd,
   }
 }

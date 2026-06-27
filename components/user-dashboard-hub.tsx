@@ -226,15 +226,15 @@ export function UserDashboardHub({
                           {isExpired ? (
                             <span className="text-destructive inline-flex items-center gap-1">
                               <IconAlertCircle className="h-4 w-4" />
-                              Pass expired on {pass.expiresOn}
+                              Expired on {pass.expiresOn} (Validity: {pass.issuedOn} - {pass.expiresOn})
                             </span>
                           ) : isExpiringSoon ? (
                             <span className="text-amber-600 inline-flex items-center gap-1">
                               <IconAlertCircle className="h-4 w-4" />
-                              Expiring soon on {pass.expiresOn}
+                              Expiring on {pass.expiresOn} (Validity: {pass.issuedOn} - {pass.expiresOn})
                             </span>
                           ) : (
-                            <span>Active until {pass.expiresOn}</span>
+                            <span>Validity: {pass.issuedOn} to {pass.expiresOn}</span>
                           )}
                         </p>
                       </div>

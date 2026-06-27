@@ -87,7 +87,7 @@ export default async function StudentPassPage() {
     )
   }
 
-  const { isStudent, latestActivePayment, hasPaidRequirement, isApproved, isPassActive, passId, passIssuedAt, billingEnd } =
+  const { isStudent, latestActivePayment, hasPaidRequirement, isApproved, isPassActive, passId, passIssuedAt, billingStart, billingEnd } =
     getPassState(application)
   const qrCodeSvg = await getPassQrSvg(application, session.user.id, 220)
 
@@ -191,7 +191,9 @@ export default async function StudentPassPage() {
               </div>
               <div className="rounded-lg border bg-muted/20 p-4 col-span-2 lg:col-span-1">
                 <p className="text-xs text-muted-foreground">Issued on</p>
-                <p className="mt-1 font-medium">{formatDateShort(passIssuedAt)}</p>
+                <p className="mt-1 font-medium">
+                  {billingStart ? formatDateShort(billingStart) : formatDateShort(passIssuedAt)}
+                </p>
               </div>
             </div>
 

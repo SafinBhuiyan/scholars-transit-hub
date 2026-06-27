@@ -141,7 +141,9 @@ export default async function Page() {
                 applicantType: applicantTypeLabel,
                 routeName: application?.route.name || "Not assigned",
                 pickupPointName: application?.pickupPoint.name || "Not assigned",
-                issuedOn: formatDateShort(pass.passIssuedAt),
+                issuedOn: pass.billingStart
+                  ? formatDateShort(pass.billingStart)
+                  : formatDateShort(pass.passIssuedAt),
                 expiresOn: pass.billingEnd
                   ? formatDateShort(pass.billingEnd)
                   : "Not set",

@@ -3,14 +3,11 @@
 import { useEffect } from "react"
 
 const GA_ID = "G-8NRBZ2NFT9"
-const TAWK_SRC = "https://embed.tawk.to/69c5746cb188961c38ffebad/1jklktimr"
 
 declare global {
   interface Window {
     dataLayer?: unknown[]
     gtag?: (...args: unknown[]) => void
-    Tawk_API?: Record<string, unknown>
-    Tawk_LoadStart?: Date
   }
 }
 
@@ -39,19 +36,6 @@ export function ExternalScripts() {
         gtag('config', '${GA_ID}');
       `
       document.head.appendChild(init)
-    }
-
-    if (!document.getElementById("tawk-to-loader")) {
-      window.Tawk_API = window.Tawk_API || {}
-      window.Tawk_LoadStart = new Date()
-
-      const tawk = document.createElement("script")
-      tawk.id = "tawk-to-loader"
-      tawk.async = true
-      tawk.src = TAWK_SRC
-      tawk.charset = "UTF-8"
-      tawk.setAttribute("crossorigin", "*")
-      document.head.appendChild(tawk)
     }
   }, [])
 

@@ -3,6 +3,8 @@ import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import {
   IconAlertCircle,
+  IconBrandApple,
+  IconBrandGoogle,
   IconCheck,
   IconClock,
   IconCreditCard,
@@ -101,7 +103,23 @@ export default async function StudentPassPage() {
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-          {isPassActive ? <PassPrintButton /> : null}
+          {isPassActive ? (
+            <>
+              <PassPrintButton />
+              <Button variant="outline" asChild className="bg-neutral-900 hover:bg-neutral-800 text-white border-neutral-800">
+                <a href="/api/dashboard/pass/apple">
+                  <IconBrandApple className="mr-1.5 h-4 w-4 fill-white text-white" />
+                  Apple Wallet
+                </a>
+              </Button>
+              <Button variant="outline" asChild className="bg-neutral-900 hover:bg-neutral-800 text-white border-neutral-800">
+                <a href="/api/dashboard/pass/google">
+                  <IconBrandGoogle className="mr-1.5 h-4 w-4 text-white" />
+                  Google Wallet
+                </a>
+              </Button>
+            </>
+          ) : null}
           <Button variant="outline" asChild>
             <Link href="/dashboard/payments">Open Payments</Link>
           </Button>

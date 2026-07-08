@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { IconCamera, IconCheck, IconClock, IconLoader, IconMapPin, IconPhone, IconRoute, IconSearch, IconUser } from "@tabler/icons-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -55,11 +56,19 @@ export default function PassesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Scan Pass</h1>
-        <p className="text-muted-foreground">
-          Look up approved transport passes by student ID, application ID, name, department, or phone number.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Scan Pass</h1>
+          <p className="text-muted-foreground">
+            Look up approved transport passes by student ID, application ID, name, department, or phone number.
+          </p>
+        </div>
+        <Button asChild className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/95">
+          <Link href="/admin/dashboard/passes/scanner" className="flex items-center gap-1.5 font-semibold">
+            <IconCamera className="h-4 w-4" />
+            Open Camera Scanner
+          </Link>
+        </Button>
       </div>
 
       <Card>

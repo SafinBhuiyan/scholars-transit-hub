@@ -7,6 +7,8 @@ import { PKPass } from "passkit-generator"
 import fs from "fs"
 import path from "path"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() })

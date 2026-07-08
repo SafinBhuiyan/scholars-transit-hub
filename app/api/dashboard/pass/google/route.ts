@@ -5,6 +5,8 @@ import prisma from "@/lib/prisma"
 import { getPassState, getPassQrPayload } from "@/lib/pass"
 import crypto from "crypto"
 
+export const dynamic = "force-dynamic"
+
 // Helper to sign JWT using Node's built-in crypto (RS256)
 function signGoogleWalletJwt(payload: any, privateKeyPem: string): string {
   const header = {
@@ -75,9 +77,14 @@ export async function GET(req: NextRequest) {
 
     // Google Wallet strictly requires HTTPS URLs for all asset images (logos, hero images).
     // When running locally on HTTP localhost, we must fall back to a public HTTPS image.
-    const logoUri = baseUrl.startsWith("https")
+    let logoUri = baseUrl.startsWith("https")
       ? `${baseUrl}/logo/email-logo.png`
       : "https://raw.githubusercontent.com/google-wallet/rest-samples/main/images/logo.png"
+
+    // Google Wallet's crawler doesn't follow redirects. If using divupstudio.online, ensure we use the www. subdomain directly.
+    if (logoUri.includes("divupstudio.online") && !logoUri.includes("www.divupstudio.online")) {
+      logoUri = logoUri.replace("divupstudio.online", "www.divupstudio.online")
+    }
 
     const qrPayload = getPassQrPayload(application as any, session.user.id)
 
